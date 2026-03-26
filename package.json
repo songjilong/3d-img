@@ -1,0 +1,22 @@
+{
+  "name": "photo-pop-out-frame",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.18",
+    "exifreader": "^4.26.0"
+  },
+  "devDependencies": {
+    "fast-check": "^3.23.2",
+    "typescript": "~5.7.2",
+    "vite": "^5.4.19",
+    "vitest": "^2.1.8"
+  }
+}

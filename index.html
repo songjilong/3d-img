@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>照片出框效果</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      /* ============================================================
+         全局基础样式 - 暗色主题
+         ============================================================ */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #0f0f23;
+        color: #eee;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 32px 16px;
+      }
+
+      /* 居中布局容器 */
+      #app {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+      }
+
+      /* 应用标题 */
+      .app-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #eee;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+
+      /* ============================================================
+         阶段区域 - 默认隐藏，通过 .active 类显示
+         ============================================================ */
+      .stage-section {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .stage-section.active {
+        display: flex;
+      }
+
+      /* ============================================================
+         加载指示器
+         ============================================================ */
+      #loading-indicator {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 48px 24px;
+      }
+
+      #loading-indicator.active {
+        display: flex;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(124, 111, 255, 0.2);
+        border-top-color: #7c6fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      #loading-text {
+        color: #aaa;
+        font-size: 15px;
+      }
+
+      /* ============================================================
+         错误提示横幅
+         ============================================================ */
+      #error-banner {
+        display: none;
+        width: 100%;
+        max-width: 560px;
+        color: #ff6b6b;
+        background-color: rgba(255, 107, 107, 0.1);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 14px;
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      #error-banner.active {
+        display: block;
+      }
+
+      /* ============================================================
+         调整阶段布局 - 左侧画布预览 + 右侧控制面板
+         ============================================================ */
+      .adjust-layout {
+        width: 100%;
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* 左侧：画布预览区域 */
+      #canvas-preview {
+        flex: 1 1 480px;
+        max-width: 600px;
+        min-width: 280px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      #canvas-preview canvas {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+
+      /* 右侧：控制面板 + 导出面板 */
+      .right-panel {
+        flex: 0 0 320px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 应用标题 -->
+      <h1 class="app-title">照片出框效果</h1>
+
+      <!-- 错误提示横幅 -->
+      <div id="error-banner"></div>
+
+      <!-- 加载指示器 -->
+      <div id="loading-indicator">
+        <div class="spinner"></div>
+        <span id="loading-text">正在处理...</span>
+      </div>
+
+      <!-- 阶段 1：上传 -->
+      <div id="stage-upload" class="stage-section active"></div>
+
+      <!-- 阶段 2：分割预览 -->
+      <div id="stage-segmentation-preview" class="stage-section"></div>
+
+      <!-- 阶段 3：调整（画布预览 + 控制面板 + 导出） -->
+      <div id="stage-adjusting" class="stage-section">
+        <div class="adjust-layout">
+          <!-- 左侧：合成效果画布预览 -->
+          <div id="canvas-preview"></div>
+          <!-- 右侧：控制面板 + 导出面板 -->
+          <div class="right-panel">
+            <div id="controls-container"></div>
+            <div id="export-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
