@@ -1,228 +1,163 @@
 // ============================================================
-// 前景分割器 - 双模型策略
-// 同时使用 selfie_segmenter（擅长人形轮廓，含动漫）和 deeplab_v3（擅长真实物体）
-// 取两者遮罩的最大值（并集），提升对各类图片的泛化能力
+// 前景分割器 - 基于 U²-Net (u2netp) 显著性目标检测
+// 使用 onnxruntime-web 在浏览器中运行 U²-Net 轻量版模型
+// 相比 MediaPipe 双模型方案，U²-Net 边缘质量更高、泛化能力更强
 // ============================================================
 
-import {
-  ImageSegmenter,
-  FilesetResolver,
-} from '@mediapipe/tasks-vision';
+import * as ort from 'onnxruntime-web';
 import type { SegmentationResult, BoundingBox } from '../types';
 
-// MediaPipe WASM 文件 CDN 基础路径
-const WASM_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm';
+// U²-Net 模型输入尺寸
+const MODEL_WIDTH = 320;
+const MODEL_HEIGHT = 320;
 
-// 模型 1：Selfie Segmenter（人形轮廓分割，对动漫人物也有一定效果）
-const SELFIE_MODEL_PATH =
-  'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite';
+// ImageNet 标准化参数
+const MEAN = [0.485, 0.456, 0.406];
+const STD = [0.229, 0.224, 0.225];
 
-// 模型 2：DeepLab V3（21 类物体分割：人、动物、植物、车辆等）
-const DEEPLAB_MODEL_PATH =
-  'https://storage.googleapis.com/mediapipe-models/image_segmenter/deeplab_v3/float32/latest/deeplab_v3.tflite';
+// u2netp 轻量版 ONNX 模型路径（来自 rembg 项目，约 4.7MB，放在 public 目录下由 Vite 提供）
+const MODEL_URL = '/u2netp.onnx';
 
-// 前景像素占比最低阈值（低于此值认为无明确主体）
+// 前景像素占比最低阈值
 const MIN_FOREGROUND_RATIO = 0.01;
 
-// DeepLab V3 背景类别 ID
-const DEEPLAB_BG_CATEGORY = 0;
-
-/** 双模型实例 */
-let selfieSegmenter: ImageSegmenter | null = null;
-let deeplabSegmenter: ImageSegmenter | null = null;
-let visionInstance: Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>> | null = null;
+/** ONNX 推理会话 */
+let session: ort.InferenceSession | null = null;
 
 /**
- * 初始化双分割模型
- * 并行加载 selfie_segmenter 和 deeplab_v3
+ * 初始化 U²-Net 模型
+ * 先下载模型为 ArrayBuffer，再用 WASM 后端创建推理会话
  */
 export async function initialize(): Promise<void> {
-  // 如果已初始化则跳过
-  if (selfieSegmenter && deeplabSegmenter) return;
+  if (session) return;
 
-  // 加载 WASM 运行时（只需加载一次）
-  if (!visionInstance) {
-    visionInstance = await FilesetResolver.forVisionTasks(WASM_CDN_BASE);
+  console.log('[U2Net] 开始下载模型...');
+  const response = await fetch(MODEL_URL);
+  if (!response.ok) {
+    throw new Error(`模型下载失败: ${response.status} ${response.statusText}`);
   }
+  const modelBuffer = await response.arrayBuffer();
+  console.log(`[U2Net] 模型下载完成, 大小: ${modelBuffer.byteLength} bytes`);
 
-  // 并行创建两个分割器实例
-  const [selfie, deeplab] = await Promise.all([
-    // Selfie Segmenter：输出置信度遮罩
-    ImageSegmenter.createFromOptions(visionInstance!, {
-      baseOptions: {
-        modelAssetPath: SELFIE_MODEL_PATH,
-        delegate: 'GPU',
-      },
-      runningMode: 'IMAGE',
-      outputConfidenceMasks: true,
-      outputCategoryMask: false,
-    }),
-    // DeepLab V3：输出类别遮罩 + 置信度遮罩
-    ImageSegmenter.createFromOptions(visionInstance!, {
-      baseOptions: {
-        modelAssetPath: DEEPLAB_MODEL_PATH,
-        delegate: 'GPU',
-      },
-      runningMode: 'IMAGE',
-      outputConfidenceMasks: true,
-      outputCategoryMask: true,
-    }),
-  ]);
-
-  selfieSegmenter = selfie;
-  deeplabSegmenter = deeplab;
+  console.log('[U2Net] 创建推理会话...');
+  session = await ort.InferenceSession.create(modelBuffer, {
+    executionProviders: ['wasm'],
+  });
+  console.log('[U2Net] 推理会话创建成功');
+  console.log('[U2Net] 输入:', session.inputNames, '输出:', session.outputNames);
 }
 
 /**
- * 对图片执行前景分割（双模型融合）
- * 分别用两个模型分割，取置信度最大值作为最终遮罩
- * @param image 输入图片（HTMLImageElement 或 ImageBitmap）
- * @returns 分割结果
+ * 对图片执行前景分割
+ * @param image 输入图片
+ * @returns 分割结果（遮罩、是否有主体、主体边界框）
  */
 export async function segment(
   image: HTMLImageElement | ImageBitmap,
 ): Promise<SegmentationResult> {
-  if (!selfieSegmenter || !deeplabSegmenter) {
+  if (!session) {
     throw new Error('分割模型尚未初始化，请先调用 initialize()');
   }
 
   const width = image instanceof HTMLImageElement ? image.naturalWidth : image.width;
   const height = image instanceof HTMLImageElement ? image.naturalHeight : image.height;
 
-  // ── 模型 1：Selfie Segmenter ──
-  const selfieConfidence = runSelfieSegmenter(image);
+  // 预处理：缩放到 320×320 并做 ImageNet 标准化
+  const inputTensor = preprocessImage(image, MODEL_WIDTH, MODEL_HEIGHT);
 
-  // ── 模型 2：DeepLab V3 ──
-  const deeplabConfidence = runDeeplabSegmenter(image);
+  // 推理（动态获取输入名称）
+  const inputName = session.inputNames[0];
+  const feeds: Record<string, ort.Tensor> = { [inputName]: inputTensor };
+  const results = await session.run(feeds);
 
-  // 确定统一的遮罩尺寸（使用较大的那个）
-  const maskW = Math.max(selfieConfidence.width, deeplabConfidence.width);
-  const maskH = Math.max(selfieConfidence.height, deeplabConfidence.height);
+  // 取第一个输出（U²-Net 有多个输出头，第一个是最终融合结果）
+  const outputNames = Object.keys(results);
+  console.log('[U2Net] 输出张量:', outputNames);
+  const outputTensor = results[outputNames[0]];
+  console.log('[U2Net] 输出形状:', outputTensor.dims);
+  const outputData = outputTensor.data as Float32Array;
 
-  // ── 融合：取两个模型置信度的最大值 ──
-  const merged = new Float32Array(maskW * maskH);
-  for (let y = 0; y < maskH; y++) {
-    for (let x = 0; x < maskW; x++) {
-      const idx = y * maskW + x;
+  // 归一化输出到 [0, 1]
+  const normalized = normalizeOutput(outputData);
 
-      // 从 selfie 遮罩采样
-      const sx = Math.min(Math.floor((x / maskW) * selfieConfidence.width), selfieConfidence.width - 1);
-      const sy = Math.min(Math.floor((y / maskH) * selfieConfidence.height), selfieConfidence.height - 1);
-      const selfieVal = selfieConfidence.data[sy * selfieConfidence.width + sx];
+  // 将 320×320 遮罩上采样到原图尺寸并转为 ImageData
+  const foregroundMask = maskToImageData(normalized, MODEL_WIDTH, MODEL_HEIGHT, width, height);
 
-      // 从 deeplab 遮罩采样
-      const dx = Math.min(Math.floor((x / maskW) * deeplabConfidence.width), deeplabConfidence.width - 1);
-      const dy = Math.min(Math.floor((y / maskH) * deeplabConfidence.height), deeplabConfidence.height - 1);
-      const deeplabVal = deeplabConfidence.data[dy * deeplabConfidence.width + dx];
-
-      // 取最大值（并集策略）
-      merged[idx] = Math.max(selfieVal, deeplabVal);
-    }
-  }
-
-  // 转换为 ImageData
-  const foregroundMask = confidenceToImageData(merged, maskW, maskH, width, height);
-
-  // 分析前景
-  const { hasSubject, subjectBounds } = analyzeForeground(merged, maskW, maskH, width, height);
+  // 分析前景区域
+  const { hasSubject, subjectBounds } = analyzeForeground(
+    normalized, MODEL_WIDTH, MODEL_HEIGHT, width, height,
+  );
 
   return { mask: foregroundMask, hasSubject, subjectBounds };
 }
 
-/** Selfie Segmenter 的置信度结果 */
-interface ConfidenceMap {
-  data: Float32Array;
-  width: number;
-  height: number;
-}
-
 /**
- * 运行 Selfie Segmenter，返回前景置信度
- */
-function runSelfieSegmenter(image: HTMLImageElement | ImageBitmap): ConfidenceMap {
-  const result = selfieSegmenter!.segment(image);
-  const masks = result.confidenceMasks;
-
-  if (!masks || masks.length === 0) {
-    result.close();
-    return { data: new Float32Array(0), width: 0, height: 0 };
-  }
-
-  // Selfie 模型第一个置信度遮罩即为前景
-  const data = masks[0].getAsFloat32Array().slice(); // 复制数据
-  const w = masks[0].width;
-  const h = masks[0].height;
-  result.close();
-
-  return { data, width: w, height: h };
-}
-
-/**
- * 运行 DeepLab V3，合并所有非背景类别的置信度
- */
-function runDeeplabSegmenter(image: HTMLImageElement | ImageBitmap): ConfidenceMap {
-  const result = deeplabSegmenter!.segment(image);
-  const categoryMask = result.categoryMask;
-  const confidenceMasks = result.confidenceMasks;
-
-  if (!categoryMask) {
-    result.close();
-    return { data: new Float32Array(0), width: 0, height: 0 };
-  }
-
-  const catData = categoryMask.getAsUint8Array();
-  const w = categoryMask.width;
-  const h = categoryMask.height;
-
-  // 找出所有前景类别
-  const fgCategories = new Set<number>();
-  for (let i = 0; i < catData.length; i++) {
-    if (catData[i] !== DEEPLAB_BG_CATEGORY) {
-      fgCategories.add(catData[i]);
-    }
-  }
-
-  // 合并前景类别的置信度
-  const merged = new Float32Array(w * h);
-  if (confidenceMasks && confidenceMasks.length > 0) {
-    for (const cat of fgCategories) {
-      if (cat < confidenceMasks.length) {
-        const catConf = confidenceMasks[cat].getAsFloat32Array();
-        for (let i = 0; i < merged.length; i++) {
-          merged[i] = Math.min(1.0, merged[i] + catConf[i]);
-        }
-      }
-    }
-  } else {
-    // 无置信度遮罩时退化为二值
-    for (let i = 0; i < catData.length; i++) {
-      merged[i] = catData[i] !== DEEPLAB_BG_CATEGORY ? 1.0 : 0.0;
-    }
-  }
-
-  result.close();
-  return { data: merged, width: w, height: h };
-}
-
-/**
- * 释放所有模型资源
+ * 释放模型资源
  */
 export function dispose(): void {
-  if (selfieSegmenter) {
-    selfieSegmenter.close();
-    selfieSegmenter = null;
-  }
-  if (deeplabSegmenter) {
-    deeplabSegmenter.close();
-    deeplabSegmenter = null;
+  if (session) {
+    session.release();
+    session = null;
   }
 }
 
 /**
- * 将置信度浮点数组转换为 RGBA ImageData
- * 保留 alpha 通道渐变以实现边缘抗锯齿
+ * 预处理图片：缩放到目标尺寸，提取 RGB 通道并做 ImageNet 标准化
+ * 输出格式：NCHW [1, 3, H, W]
  */
-function confidenceToImageData(
+function preprocessImage(
+  image: HTMLImageElement | ImageBitmap,
+  targetW: number,
+  targetH: number,
+): ort.Tensor {
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(image, 0, 0, targetW, targetH);
+
+  const imageData = ctx.getImageData(0, 0, targetW, targetH);
+  const data = imageData.data;
+  const pixels = new Float32Array(1 * 3 * targetW * targetH);
+
+  for (let y = 0; y < targetH; y++) {
+    for (let x = 0; x < targetW; x++) {
+      const srcIdx = (y * targetW + x) * 4;
+      const dstIdx = y * targetW + x;
+
+      pixels[dstIdx] = (data[srcIdx] / 255 - MEAN[0]) / STD[0];                     // R
+      pixels[dstIdx + targetW * targetH] = (data[srcIdx + 1] / 255 - MEAN[1]) / STD[1]; // G
+      pixels[dstIdx + 2 * targetW * targetH] = (data[srcIdx + 2] / 255 - MEAN[2]) / STD[2]; // B
+    }
+  }
+
+  return new ort.Tensor('float32', pixels, [1, 3, targetH, targetW]);
+}
+
+/**
+ * 将模型输出归一化到 [0, 1] 范围
+ * U²-Net 输出的是 sigmoid 后的显著性图，但数值范围可能不完全在 [0,1]
+ */
+function normalizeOutput(data: Float32Array): Float32Array {
+  let min = Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] < min) min = data[i];
+    if (data[i] > max) max = data[i];
+  }
+
+  const range = max - min || 1;
+  const result = new Float32Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    result[i] = (data[i] - min) / range;
+  }
+  return result;
+}
+
+/**
+ * 将置信度遮罩转换为 RGBA ImageData（上采样到原图尺寸）
+ */
+function maskToImageData(
   maskData: Float32Array,
   maskW: number,
   maskH: number,
@@ -293,5 +228,3 @@ function analyzeForeground(
     },
   };
 }
-
-
