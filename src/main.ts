@@ -12,7 +12,7 @@ import { initialize as initSegmenter, segment } from './core/foreground-segmente
 import { generateFrame } from './core/frame-generator';
 import { compose, exportImage } from './core/compositor';
 import { startLivePhotoAnimation, type AnimationController } from './core/animator';
-import { recordLivePhotoVideo } from './core/video-recorder';
+import { recordLivePhotoVideo, type RecordResult } from './core/video-recorder';
 import { getState, updateStage, updatePhotoOffset, updatePhotoScale, resetAdjustments } from './state';
 import type { ProcessStage, ExportFormat, CompositeParams } from './types';
 
@@ -213,7 +213,7 @@ function handleControlChange(updates: Partial<ControlUpdates>): void {
  * @param format 导出格式
  */
 function triggerDownload(blob: Blob, format: ExportFormat): void {
-  const extMap: Record<ExportFormat, string> = { png: 'png', jpeg: 'jpg', webm: 'webm' };
+  const extMap: Record<ExportFormat, string> = { png: 'png', jpeg: 'jpg', webm: 'mp4' };
   const filename = `出框效果_${Date.now()}.${extMap[format]}`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -238,17 +238,24 @@ async function handleExport(format: ExportFormat): Promise<void> {
     updateStage('exporting');
 
     if (format === 'webm') {
-      // 导出 Live Photo 动态视频
+      // 导出 Live Photo 动态视频（自动选择 MP4 或 WebM）
       showLoading('正在录制动态视频...');
 
       const params = getCurrentCompositeParams();
       if (!params) return;
 
-      const blob = await recordLivePhotoVideo(params, (progress) => {
+      const result: RecordResult = await recordLivePhotoVideo(params, (progress) => {
         loadingText.textContent = `正在录制动态视频... ${Math.round(progress * 100)}%`;
       });
 
-      triggerDownload(blob, format);
+      // 用实际格式的扩展名
+      const filename = `出框效果_${Date.now()}.${result.extension}`;
+      const url = URL.createObjectURL(result.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
     } else {
       // 导出静态图片
       showLoading('正在导出效果图...');
@@ -272,7 +279,8 @@ async function handleExport(format: ExportFormat): Promise<void> {
     showStage('adjusting');
   } catch (err) {
     console.error('导出失败：', err);
-    showError('导出失败，请重试');
+    const errMsg = err instanceof Error ? err.message : String(err);
+    showError(`导出失败：${errMsg}`);
     stageAdjusting.classList.add('active');
   }
 }

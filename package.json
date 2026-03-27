@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "exifreader": "^4.26.0",
+    "mp4-muxer": "^5.2.2",
     "onnxruntime-web": "^1.24.3"
   },
   "devDependencies": {

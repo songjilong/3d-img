@@ -70,7 +70,7 @@ interface FormatOption {
 const FORMAT_OPTIONS: FormatOption[] = [
   { value: 'png', label: 'PNG', description: 'PNG（保留透明度）' },
   { value: 'jpeg', label: 'JPEG', description: 'JPEG（文件更小）' },
-  { value: 'webm', label: 'WebM', description: 'WebM 动态视频' },
+  { value: 'webm', label: 'Video', description: '动态视频（MP4/WebM）' },
 ];
 
 // ------------------------------------------------------------

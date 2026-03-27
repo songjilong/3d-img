@@ -20,17 +20,15 @@ interface AnimationConfig {
 
 /** 默认动画配置 */
 const DEFAULT_ANIM_CONFIG: AnimationConfig = {
-  burstDuration: 600,
-  wobblePeriod: 2000,
-  wobbleAmplitude: 3,
-  wobbleScaleAmplitude: 0.008,
+  burstDuration: 0,
+  wobblePeriod: 2500,
+  wobbleAmplitude: 1.5,
+  wobbleScaleAmplitude: 0.015,
 };
 
-/** 缓动函数：easeOutBack，带轻微回弹 */
-function easeOutBack(t: number): number {
-  const c1 = 1.70158;
-  const c3 = c1 + 1;
-  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+/** 缓动函数：easeInOutSine，平滑呼吸感 */
+function easeInOutSine(t: number): number {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
 /** 动画控制器 */
@@ -82,28 +80,16 @@ export function startLivePhotoAnimation(
     if (!running) return;
 
     const elapsed = now - startTime;
-    let currentScale: number;
-    let currentOffsetX: number;
-    let currentOffsetY: number;
 
-    if (elapsed < cfg.burstDuration) {
-      // ── 阶段 1：冲出动画 ──
-      const t = elapsed / cfg.burstDuration;
-      const eased = easeOutBack(Math.min(t, 1));
+    // 近景/远景呼吸效果：平滑正弦缩放
+    const phase = (elapsed / cfg.wobblePeriod) * Math.PI * 2;
+    const breathFactor = easeInOutSine((Math.sin(phase) + 1) / 2);
 
-      currentScale = startScale + (targetScale - startScale) * eased;
-      currentOffsetX = startOffsetX + (targetOffsetX - startOffsetX) * eased;
-      currentOffsetY = startOffsetY + (targetOffsetY - startOffsetY) * eased;
-    } else {
-      // ── 阶段 2：抖动循环 ──
-      const wobbleTime = elapsed - cfg.burstDuration;
-      const phase = (wobbleTime / cfg.wobblePeriod) * Math.PI * 2;
-
-      // 正弦微扰：X/Y 方向用不同相位避免单调
-      currentScale = targetScale + Math.sin(phase) * cfg.wobbleScaleAmplitude;
-      currentOffsetX = targetOffsetX + Math.sin(phase * 1.3) * cfg.wobbleAmplitude;
-      currentOffsetY = targetOffsetY + Math.cos(phase * 0.7) * cfg.wobbleAmplitude;
-    }
+    // 缩放在目标值基础上做微小变化（近景放大、远景缩小）
+    const currentScale = targetScale + (breathFactor * 2 - 1) * cfg.wobbleScaleAmplitude;
+    // 轻微位移增加自然感
+    const currentOffsetX = targetOffsetX + Math.sin(phase * 0.7) * cfg.wobbleAmplitude;
+    const currentOffsetY = targetOffsetY + Math.cos(phase * 0.5) * cfg.wobbleAmplitude;
 
     // 用当前帧参数合成
     const frameParams: CompositeParams = {
