@@ -11,8 +11,13 @@ import { parse as parseExif, formatForDisplay } from './core/exif-parser';
 import { initialize as initSegmenter, segment } from './core/foreground-segmenter';
 import { generateFrame } from './core/frame-generator';
 import { compose, exportImage } from './core/compositor';
+import { startLivePhotoAnimation, type AnimationController } from './core/animator';
+import { recordLivePhotoVideo } from './core/video-recorder';
 import { getState, updateStage, updatePhotoOffset, updatePhotoScale, resetAdjustments } from './state';
-import type { ProcessStage, ExportFormat } from './types';
+import type { ProcessStage, ExportFormat, CompositeParams } from './types';
+
+// 当前动画控制器
+let currentAnimation: AnimationController | null = null;
 
 // ------------------------------------------------------------
 // DOM 元素引用
@@ -107,6 +112,12 @@ function getMetadataText(): string {
  * 执行合成并更新预览画布
  */
 function recompose(): void {
+  // 停止正在播放的动画
+  if (currentAnimation) {
+    currentAnimation.stop();
+    currentAnimation = null;
+  }
+
   const state = getState();
   if (!state.originalImage || !state.segmentation || !state.frameLayout) {
     return;
@@ -202,8 +213,8 @@ function handleControlChange(updates: Partial<ControlUpdates>): void {
  * @param format 导出格式
  */
 function triggerDownload(blob: Blob, format: ExportFormat): void {
-  const ext = format === 'jpeg' ? 'jpg' : 'png';
-  const filename = `出框效果_${Date.now()}.${ext}`;
+  const extMap: Record<ExportFormat, string> = { png: 'png', jpeg: 'jpg', webm: 'webm' };
+  const filename = `出框效果_${Date.now()}.${extMap[format]}`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -224,33 +235,44 @@ async function handleExport(format: ExportFormat): Promise<void> {
   }
 
   try {
-    showLoading('正在导出效果图...');
     updateStage('exporting');
 
-    // 合成最终效果图
-    const canvas = compose({
-      photo: state.originalImage,
-      mask: state.segmentation.mask,
-      frameLayout: state.frameLayout,
-      backgroundColor: state.backgroundColor,
-      frameColor: state.frameConfig.frameColor,
-      photoOffset: state.photoOffset,
-      photoScale: state.photoScale,
-      metadataText: getMetadataText(),
-    });
+    if (format === 'webm') {
+      // 导出 Live Photo 动态视频
+      showLoading('正在录制动态视频...');
 
-    // 导出为 Blob
-    const blob = await exportImage(canvas, format);
+      const params = getCurrentCompositeParams();
+      if (!params) return;
 
-    // 触发下载
-    triggerDownload(blob, format);
+      const blob = await recordLivePhotoVideo(params, (progress) => {
+        loadingText.textContent = `正在录制动态视频... ${Math.round(progress * 100)}%`;
+      });
+
+      triggerDownload(blob, format);
+    } else {
+      // 导出静态图片
+      showLoading('正在导出效果图...');
+
+      const canvas = compose({
+        photo: state.originalImage,
+        mask: state.segmentation.mask,
+        frameLayout: state.frameLayout,
+        backgroundColor: state.backgroundColor,
+        frameColor: state.frameConfig.frameColor,
+        photoOffset: state.photoOffset,
+        photoScale: state.photoScale,
+        metadataText: getMetadataText(),
+      });
+
+      const blob = await exportImage(canvas, format);
+      triggerDownload(blob, format);
+    }
 
     // 返回调整阶段
     showStage('adjusting');
   } catch (err) {
     console.error('导出失败：', err);
     showError('导出失败，请重试');
-    // 显示调整阶段以便用户重试
     stageAdjusting.classList.add('active');
   }
 }
@@ -387,6 +409,9 @@ function handleSegmentationConfirm(): void {
   // 创建导出面板
   exportContainer.innerHTML = '';
   createExportUI(exportContainer, handleExport);
+
+  // 创建 Live Photo 动画按钮
+  createAnimationButton();
 }
 
 /**
@@ -413,6 +438,70 @@ function handleRetry(): void {
 // ------------------------------------------------------------
 // 应用初始化
 // ------------------------------------------------------------
+
+/**
+ * 获取当前合成参数（用于动画）
+ */
+function getCurrentCompositeParams(): CompositeParams | null {
+  const state = getState();
+  if (!state.originalImage || !state.segmentation || !state.frameLayout) return null;
+  return {
+    photo: state.originalImage,
+    mask: state.segmentation.mask,
+    frameLayout: state.frameLayout,
+    backgroundColor: state.backgroundColor,
+    frameColor: state.frameConfig.frameColor,
+    photoOffset: state.photoOffset,
+    photoScale: state.photoScale,
+    metadataText: getMetadataText(),
+  };
+}
+
+/**
+ * 创建 Live Photo 动画播放按钮
+ */
+function createAnimationButton(): void {
+  // 在导出面板下方添加动画按钮
+  const animBtn = document.createElement('button');
+  animBtn.textContent = '▶ 播放 Live Photo';
+  animBtn.style.cssText = `
+    padding: 10px 24px; border-radius: 8px; border: 1px solid #7c6fff;
+    background-color: rgba(124,111,255,0.1); color: #ccc; font-size: 14px;
+    cursor: pointer; transition: background-color 0.2s; width: 100%; max-width: 320px;
+  `;
+  animBtn.addEventListener('mouseenter', () => {
+    animBtn.style.backgroundColor = 'rgba(124,111,255,0.2)';
+  });
+  animBtn.addEventListener('mouseleave', () => {
+    animBtn.style.backgroundColor = 'rgba(124,111,255,0.1)';
+  });
+
+  animBtn.addEventListener('click', () => {
+    // 如果动画正在播放，停止并恢复静态预览
+    if (currentAnimation && currentAnimation.isRunning()) {
+      currentAnimation.stop();
+      currentAnimation = null;
+      animBtn.textContent = '▶ 播放 Live Photo';
+      recompose();
+      return;
+    }
+
+    const params = getCurrentCompositeParams();
+    if (!params) return;
+
+    // 创建动画用的 Canvas
+    const animCanvas = document.createElement('canvas');
+    animCanvas.style.cssText = 'max-width: 100%; height: auto; border-radius: 8px;';
+    canvasPreview.innerHTML = '';
+    canvasPreview.appendChild(animCanvas);
+
+    // 启动动画
+    currentAnimation = startLivePhotoAnimation(animCanvas, params);
+    animBtn.textContent = '⏹ 停止动画';
+  });
+
+  exportContainer.appendChild(animBtn);
+}
 
 /** 初始化应用 */
 function init(): void {

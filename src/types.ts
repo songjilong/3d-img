@@ -109,7 +109,7 @@ export interface CompositeParams {
 }
 
 /** 导出格式 */
-export type ExportFormat = 'png' | 'jpeg';
+export type ExportFormat = 'png' | 'jpeg' | 'webm';
 
 // ------------------------------------------------------------
 // EXIF 相关类型
