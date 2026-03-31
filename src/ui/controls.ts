@@ -3,7 +3,7 @@
 // @author system
 // ============================================================
 
-import type { AppState } from '../types';
+import type { AppState, MetadataPosition } from '../types';
 
 /** 控制面板回调更新接口 */
 export interface ControlUpdates {
@@ -14,6 +14,8 @@ export interface ControlUpdates {
   frameColor?: string;
   metadataText?: string;
   metadataFontSize?: number;
+  metadataColor?: string;
+  metadataPosition?: MetadataPosition;
   reset?: boolean;
 }
 
@@ -329,6 +331,104 @@ export function createControlsPanel(
     (v) => onChange({ metadataFontSize: v }),
   );
   wrapper.appendChild(fontSizeEl);
+
+  // ── 文字颜色 ──
+  const { group: metaColorGroup } = createControlGroup('文字颜色');
+  const metaColorRow = document.createElement('div');
+  metaColorRow.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+
+  const metaColorInput = document.createElement('input');
+  metaColorInput.type = 'color';
+  metaColorInput.value = state.metadataColor;
+  metaColorInput.style.cssText = COLOR_INPUT_STYLE;
+
+  const metaColorValue = document.createElement('span');
+  metaColorValue.textContent = state.metadataColor;
+  metaColorValue.style.cssText = `
+    color: var(--text-muted, rgba(131,24,67,0.5)); font-size: 12px;
+    font-family: monospace; font-variant-numeric: tabular-nums;
+  `;
+
+  metaColorInput.addEventListener('input', () => {
+    metaColorValue.textContent = metaColorInput.value;
+    onChange({ metadataColor: metaColorInput.value });
+  });
+
+  metaColorRow.appendChild(metaColorInput);
+  metaColorRow.appendChild(metaColorValue);
+  metaColorGroup.appendChild(metaColorRow);
+
+  // 文字颜色预设
+  const META_COLOR_PRESETS = ['#666666', '#333333', '#000000', '#FFFFFF', '#EC4899', '#06B6D4', '#999999', '#A0522D'];
+  const metaColorPresets = createColorPresets(META_COLOR_PRESETS, state.metadataColor, (color) => {
+    metaColorInput.value = color;
+    metaColorValue.textContent = color;
+    onChange({ metadataColor: color });
+  });
+  metaColorGroup.appendChild(metaColorPresets);
+  wrapper.appendChild(metaColorGroup);
+
+  // ── 文字位置 ──
+  const { group: posGroup } = createControlGroup('文字位置');
+  const posRow = document.createElement('div');
+  posRow.style.cssText = 'display: flex; gap: 6px;';
+
+  const positions: { value: 'left' | 'center' | 'right'; label: string; icon: string }[] = [
+    {
+      value: 'left', label: '左对齐',
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`,
+    },
+    {
+      value: 'center', label: '居中',
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
+    },
+    {
+      value: 'right', label: '右对齐',
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>`,
+    },
+  ];
+
+  const posBtns: HTMLButtonElement[] = [];
+
+  const updatePosBtns = (selected: string) => {
+    posBtns.forEach((btn, i) => {
+      const isActive = positions[i].value === selected;
+      btn.style.backgroundColor = isActive ? 'var(--accent, #EC4899)' : 'var(--bg-surface, #FFFFFF)';
+      btn.style.color = isActive ? '#FFFFFF' : 'var(--text-primary, #0A0A0A)';
+      btn.style.boxShadow = isActive ? '3px 3px 0 var(--border-brutal, #0A0A0A)' : '2px 2px 0 var(--border-brutal, #0A0A0A)';
+    });
+  };
+
+  positions.forEach((pos) => {
+    const btn = document.createElement('button');
+    const isActive = pos.value === state.metadataPosition;
+    btn.innerHTML = pos.icon;
+    btn.title = pos.label;
+    btn.style.cssText = `
+      flex: 1; padding: 8px;
+      border: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
+      background-color: ${isActive ? 'var(--accent, #EC4899)' : 'var(--bg-surface, #FFFFFF)'};
+      color: ${isActive ? '#FFFFFF' : 'var(--text-primary, #0A0A0A)'};
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition-fast, 150ms ease);
+      box-shadow: ${isActive ? '3px 3px 0 var(--border-brutal, #0A0A0A)' : '2px 2px 0 var(--border-brutal, #0A0A0A)'};
+    `;
+    btn.addEventListener('click', () => {
+      updatePosBtns(pos.value);
+      onChange({ metadataPosition: pos.value });
+    });
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transform = 'translate(-1px, -1px)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = 'translate(0, 0)';
+    });
+    posBtns.push(btn);
+    posRow.appendChild(btn);
+  });
+
+  posGroup.appendChild(posRow);
+  wrapper.appendChild(posGroup);
 
   wrapper.appendChild(divider());
 

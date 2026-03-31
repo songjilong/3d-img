@@ -13,6 +13,7 @@ import { generateFrame } from './core/frame-generator';
 import { compose, exportImage } from './core/compositor';
 import { startLivePhotoAnimation, type AnimationController } from './core/animator';
 import { recordLivePhotoVideo, type RecordResult } from './core/video-recorder';
+import { DEFAULT_CONFIG } from './config';
 import { getState, updateStage, updatePhotoOffset, updatePhotoScale, resetAdjustments } from './state';
 import type { ProcessStage, ExportFormat, CompositeParams } from './types';
 
@@ -133,6 +134,8 @@ function recompose(): void {
     photoScale: state.photoScale,
     metadataText: getMetadataText(),
     metadataFontSize: state.metadataFontSize,
+    metadataColor: state.metadataColor,
+    metadataPosition: state.metadataPosition,
   });
 
   // 更新预览区域
@@ -162,6 +165,8 @@ function handleControlChange(updates: Partial<ControlUpdates>): void {
     state.backgroundColor = '#1a1a2e';
     state.frameConfig.frameColor = '#FFFFFF';
     state.metadataFontSize = 24;
+    state.metadataColor = DEFAULT_CONFIG.DEFAULT_METADATA_COLOR;
+    state.metadataPosition = DEFAULT_CONFIG.DEFAULT_METADATA_POSITION;
     // 重新计算默认出框参数
     const defaults = computeDefaultParams();
     updatePhotoOffset(defaults.offset);
@@ -209,6 +214,16 @@ function handleControlChange(updates: Partial<ControlUpdates>): void {
   // 更新文字大小
   if (updates.metadataFontSize != null) {
     state.metadataFontSize = updates.metadataFontSize;
+  }
+
+  // 更新文字颜色
+  if (updates.metadataColor != null) {
+    state.metadataColor = updates.metadataColor;
+  }
+
+  // 更新文字位置
+  if (updates.metadataPosition != null) {
+    state.metadataPosition = updates.metadataPosition;
   }
 
   recompose();
@@ -277,6 +292,8 @@ async function handleExport(format: ExportFormat): Promise<void> {
         photoScale: state.photoScale,
         metadataText: getMetadataText(),
         metadataFontSize: state.metadataFontSize,
+        metadataColor: state.metadataColor,
+        metadataPosition: state.metadataPosition,
       });
 
       const blob = await exportImage(canvas, format);
@@ -471,6 +488,8 @@ function getCurrentCompositeParams(): CompositeParams | null {
     photoScale: state.photoScale,
     metadataText: getMetadataText(),
     metadataFontSize: state.metadataFontSize,
+    metadataColor: state.metadataColor,
+    metadataPosition: state.metadataPosition,
   };
 }
 

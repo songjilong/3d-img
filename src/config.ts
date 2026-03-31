@@ -1,4 +1,4 @@
-import type { ExportFormat } from './types';
+import type { ExportFormat, MetadataPosition } from './types';
 
 // ============================================================
 // 照片出框效果 - 默认配置常量
@@ -23,4 +23,8 @@ export const DEFAULT_CONFIG = {
   DEFAULT_EXPORT_FORMAT: 'png' as ExportFormat,
   /** 默认拍摄参数文字大小 */
   DEFAULT_METADATA_FONT_SIZE: 24,
+  /** 默认拍摄参数文字颜色 */
+  DEFAULT_METADATA_COLOR: '#666666',
+  /** 默认拍摄参数文字位置 */
+  DEFAULT_METADATA_POSITION: 'center' as MetadataPosition,
 } as const;

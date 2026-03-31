@@ -88,6 +88,9 @@ export interface FrameLayout {
 // 图层合成相关类型
 // ------------------------------------------------------------
 
+/** 拍摄参数文字位置 */
+export type MetadataPosition = 'center' | 'left' | 'right';
+
 /** 合成参数 */
 export interface CompositeParams {
   /** 原始照片 */
@@ -108,6 +111,10 @@ export interface CompositeParams {
   metadataText: string;
   /** 拍摄参数文字大小（像素） */
   metadataFontSize: number;
+  /** 拍摄参数文字颜色 */
+  metadataColor: string;
+  /** 拍摄参数文字位置 */
+  metadataPosition: MetadataPosition;
 }
 
 /** 导出格式 */
@@ -167,6 +174,10 @@ export interface AppState {
   customMetadataText: string | null;
   /** 拍摄参数文字大小 */
   metadataFontSize: number;
+  /** 拍摄参数文字颜色 */
+  metadataColor: string;
+  /** 拍摄参数文字位置 */
+  metadataPosition: MetadataPosition;
   /** 照片位置偏移 */
   photoOffset: { x: number; y: number };
   /** 照片缩放比例 */

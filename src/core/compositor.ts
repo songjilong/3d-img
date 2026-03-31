@@ -1,7 +1,5 @@
-import type { CompositeParams, ExportFormat } from '../types';
+import type { CompositeParams, ExportFormat, MetadataPosition } from '../types';
 
-// 元数据文字颜色
-const METADATA_TEXT_COLOR = '#666666';
 // 相框在背景中的占比（相框宽度占背景宽度的比例）
 const FRAME_RATIO = 0.75;
 
@@ -82,7 +80,7 @@ export function compose(params: CompositeParams): HTMLCanvasElement {
   drawPopOutLayer(ctx, photo, mask, photoRect, photoDrawX, photoDrawY, drawWidth, drawHeight, photoScale);
 
   // ── 绘制元数据文字 ──
-  drawMetadata(ctx, metadataText, metadataRect, params.metadataFontSize);
+  drawMetadata(ctx, metadataText, metadataRect, params.metadataFontSize, params.metadataColor, params.metadataPosition);
 
   // 恢复坐标系
   ctx.restore();
@@ -169,27 +167,42 @@ function drawPopOutLayer(
 
 /**
  * 绘制元数据文字（拍摄参数信息）
- * 在相框底部的 metadataRect 区域居中显示
+ * 支持自定义颜色和位置（居中/左对齐/右对齐）
  */
 function drawMetadata(
   ctx: CanvasRenderingContext2D,
   text: string,
   metadataRect: { x: number; y: number; width: number; height: number },
   fontSize: number,
+  color: string,
+  position: MetadataPosition,
 ): void {
   if (!text) {
     return;
   }
 
-  ctx.fillStyle = METADATA_TEXT_COLOR;
+  ctx.fillStyle = color;
   ctx.font = `${fontSize}px sans-serif`;
-  ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(
-    text,
-    metadataRect.x + metadataRect.width / 2,
-    metadataRect.y + metadataRect.height / 2,
-  );
+
+  const padding = 16; // 左右内边距
+  const centerY = metadataRect.y + metadataRect.height / 2;
+
+  switch (position) {
+    case 'left':
+      ctx.textAlign = 'left';
+      ctx.fillText(text, metadataRect.x + padding, centerY);
+      break;
+    case 'right':
+      ctx.textAlign = 'right';
+      ctx.fillText(text, metadataRect.x + metadataRect.width - padding, centerY);
+      break;
+    case 'center':
+    default:
+      ctx.textAlign = 'center';
+      ctx.fillText(text, metadataRect.x + metadataRect.width / 2, centerY);
+      break;
+  }
 }
 
 // 默认 JPEG 导出质量
