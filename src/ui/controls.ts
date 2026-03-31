@@ -125,6 +125,17 @@ function createColorPresets(
   const row = document.createElement('div');
   row.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;';
 
+  const swatches: HTMLDivElement[] = [];
+
+  /** 更新所有色块的选中状态 */
+  const updateSwatchStyles = (selectedColor: string) => {
+    swatches.forEach((sw, i) => {
+      const match = presets[i].toLowerCase() === selectedColor.toLowerCase();
+      sw.style.border = `2px solid ${match ? 'var(--accent, #7c6fff)' : 'var(--border-subtle, rgba(255,255,255,0.06))'}`;
+      sw.style.boxShadow = match ? '0 0 8px rgba(124,111,255,0.3)' : 'none';
+    });
+  };
+
   for (const color of presets) {
     const swatch = document.createElement('div');
     const isSelected = color.toLowerCase() === currentValue.toLowerCase();
@@ -139,21 +150,30 @@ function createColorPresets(
       box-shadow: ${isSelected ? '0 0 8px rgba(124,111,255,0.3)' : 'none'};
     `;
     swatch.title = color;
-    swatch.addEventListener('click', () => onSelect(color));
+    swatch.addEventListener('click', () => {
+      updateSwatchStyles(color);
+      onSelect(color);
+    });
     swatch.addEventListener('mouseenter', () => {
-      if (!isSelected) {
+      const active = swatch.style.boxShadow.includes('rgba(124');
+      if (!active) {
         swatch.style.borderColor = 'rgba(255,255,255,0.3)';
         swatch.style.transform = 'scale(1.1)';
       }
     });
     swatch.addEventListener('mouseleave', () => {
-      if (!isSelected) {
+      const active = swatch.style.boxShadow.includes('rgba(124');
+      if (!active) {
         swatch.style.borderColor = 'var(--border-subtle, rgba(255,255,255,0.06))';
-        swatch.style.transform = 'scale(1)';
       }
+      swatch.style.transform = 'scale(1)';
     });
+    swatches.push(swatch);
     row.appendChild(swatch);
   }
+
+  // 将更新方法挂到 DOM 元素上，供外部 color picker 同步调用
+  (row as any).updateSelection = updateSwatchStyles;
 
   return row;
 }
@@ -257,16 +277,18 @@ export function createControlsPanel(
   colorInput.addEventListener('input', () => {
     colorValue.textContent = colorInput.value;
     onChange({ backgroundColor: colorInput.value });
+    (bgPresetsRow as any).updateSelection?.(colorInput.value);
   });
 
   colorRow.appendChild(colorInput);
   colorRow.appendChild(colorValue);
   bgGroup.appendChild(colorRow);
-  bgGroup.appendChild(createColorPresets(BG_PRESETS, state.backgroundColor, (color) => {
+  const bgPresetsRow = createColorPresets(BG_PRESETS, state.backgroundColor, (color) => {
     colorInput.value = color;
     colorValue.textContent = color;
     onChange({ backgroundColor: color });
-  }));
+  });
+  bgGroup.appendChild(bgPresetsRow);
   wrapper.appendChild(bgGroup);
 
   // ── 相框颜色 ──
@@ -290,16 +312,18 @@ export function createControlsPanel(
   frameColorInput.addEventListener('input', () => {
     frameColorValue.textContent = frameColorInput.value;
     onChange({ frameColor: frameColorInput.value });
+    (framePresetsRow as any).updateSelection?.(frameColorInput.value);
   });
 
   frameColorRow.appendChild(frameColorInput);
   frameColorRow.appendChild(frameColorValue);
   frameColorGroup.appendChild(frameColorRow);
-  frameColorGroup.appendChild(createColorPresets(FRAME_PRESETS, state.frameConfig.frameColor, (color) => {
+  const framePresetsRow = createColorPresets(FRAME_PRESETS, state.frameConfig.frameColor, (color) => {
     frameColorInput.value = color;
     frameColorValue.textContent = color;
     onChange({ frameColor: color });
-  }));
+  });
+  frameColorGroup.appendChild(framePresetsRow);
   wrapper.appendChild(frameColorGroup);
 
   wrapper.appendChild(divider());
