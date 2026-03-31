@@ -7,89 +7,56 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
     <style>
       /* ============================================================
-         设计令牌 (Design Tokens)
+         Neubrutalism 设计令牌
          @author system
          ============================================================ */
       :root {
-        --bg-primary: #08081a;
-        --bg-secondary: #0e0e24;
-        --bg-surface: rgba(255, 255, 255, 0.035);
-        --bg-surface-hover: rgba(255, 255, 255, 0.065);
-        --bg-glass: rgba(16, 16, 40, 0.7);
-        --border-subtle: rgba(255, 255, 255, 0.06);
-        --border-default: rgba(255, 255, 255, 0.1);
-        --border-focus: rgba(124, 111, 255, 0.5);
-        --text-primary: #f0f0f5;
-        --text-secondary: #a0a0b8;
-        --text-muted: #6b6b80;
-        --accent: #7c6fff;
-        --accent-hover: #6b5ce7;
-        --accent-glow: rgba(124, 111, 255, 0.12);
-        --accent-glow-strong: rgba(124, 111, 255, 0.25);
-        --success: #22c55e;
-        --error: #ff6b6b;
-        --error-bg: rgba(255, 107, 107, 0.08);
-        --error-border: rgba(255, 107, 107, 0.2);
-        --warning: #ffb347;
-        --radius-sm: 8px;
-        --radius-md: 12px;
-        --radius-lg: 16px;
-        --radius-xl: 20px;
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-        --shadow-glow: 0 0 20px rgba(124, 111, 255, 0.15);
+        --bg-primary: #FDF2F8;
+        --bg-surface: #FFFFFF;
+        --bg-dark: #0A0A0A;
+        --bg-yellow: #FFEB3B;
+        --border-brutal: #0A0A0A;
+        --border-width: 3px;
+        --shadow-brutal: 6px 6px 0 #0A0A0A;
+        --shadow-brutal-sm: 4px 4px 0 #0A0A0A;
+        --shadow-brutal-hover: 10px 10px 0 #0A0A0A;
+        --shadow-accent: 6px 6px 0 #EC4899;
+        --accent: #EC4899;
+        --accent-light: #F9A8D4;
+        --accent-cyan: #06B6D4;
+        --accent-yellow: #FFEB3B;
+        --accent-red: #FF5252;
+        --text-primary: #0A0A0A;
+        --text-secondary: #831843;
+        --text-muted: rgba(131, 24, 67, 0.5);
+        --font-heading: 'Archivo', system-ui, sans-serif;
+        --font-body: 'Space Grotesk', system-ui, sans-serif;
         --transition-fast: 150ms ease;
-        --transition-normal: 200ms ease;
-        --transition-slow: 300ms ease;
       }
 
       /* ============================================================
          全局基础样式
          ============================================================ */
-      *,
-      *::before,
-      *::after {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+      *, *::before, *::after {
+        margin: 0; padding: 0; box-sizing: border-box;
       }
 
       body {
         background-color: var(--bg-primary);
         color: var(--text-primary);
-        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-family: var(--font-body);
         min-height: 100vh;
         display: flex;
         justify-content: center;
-        padding: 40px 20px;
+        padding: 40px 16px;
         line-height: 1.5;
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
       }
 
-      /* 微妙的背景渐变 */
-      body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background:
-          radial-gradient(ellipse 60% 40% at 50% 0%, rgba(124, 111, 255, 0.06) 0%, transparent 70%),
-          radial-gradient(ellipse 40% 30% at 80% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 70%);
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      /* 居中布局容器 */
       #app {
-        position: relative;
-        z-index: 1;
         width: 100%;
         max-width: 1000px;
         display: flex;
@@ -98,17 +65,18 @@
         gap: 28px;
       }
 
-      /* 应用标题 */
+      /* 应用标题 - Brutalist 风格 */
       .app-title {
-        font-size: 26px;
-        font-weight: 700;
+        font-family: var(--font-heading);
+        font-size: 32px;
+        font-weight: 900;
         color: var(--text-primary);
         text-align: center;
-        letter-spacing: -0.02em;
-        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+      }
+      .app-title span {
+        color: var(--accent);
       }
 
       /* ============================================================
@@ -120,7 +88,6 @@
         flex-direction: column;
         align-items: center;
       }
-
       .stage-section.active {
         display: flex;
       }
@@ -135,7 +102,6 @@
         gap: 20px;
         padding: 56px 24px;
       }
-
       #loading-indicator.active {
         display: flex;
       }
@@ -143,10 +109,10 @@
       .spinner {
         width: 36px;
         height: 36px;
-        border: 2.5px solid rgba(124, 111, 255, 0.15);
+        border: var(--border-width) solid rgba(236, 72, 153, 0.2);
         border-top-color: var(--accent);
-        border-radius: 50%;
-        animation: spin 0.75s linear infinite;
+        border-radius: 0;
+        animation: spin 0.6s steps(8) infinite;
       }
 
       @keyframes spin {
@@ -155,8 +121,11 @@
 
       #loading-text {
         color: var(--text-secondary);
+        font-family: var(--font-heading);
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
 
       /* ============================================================
@@ -166,17 +135,16 @@
         display: none;
         width: 100%;
         max-width: 560px;
-        color: var(--error);
-        background-color: var(--error-bg);
-        border: 1px solid var(--error-border);
-        border-radius: var(--radius-md);
+        color: var(--accent-red);
+        background-color: var(--bg-surface);
+        border: var(--border-width) solid var(--accent-red);
+        box-shadow: 4px 4px 0 var(--accent-red);
         padding: 14px 20px;
         font-size: 14px;
+        font-weight: 500;
         text-align: center;
         line-height: 1.6;
-        backdrop-filter: blur(8px);
       }
-
       #error-banner.active {
         display: block;
       }
@@ -193,7 +161,7 @@
         flex-wrap: wrap;
       }
 
-      /* 左侧：画布预览区域 */
+      /* 画布预览区域 - 暗色背景保证照片观感 */
       #canvas-preview {
         flex: 1 1 480px;
         max-width: 620px;
@@ -201,21 +169,18 @@
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        border-radius: var(--radius-lg);
+        background: var(--bg-dark);
+        border: var(--border-width) solid var(--border-brutal);
+        box-shadow: var(--shadow-brutal);
         overflow: hidden;
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        box-shadow: var(--shadow-md);
+        padding: 4px;
       }
-
       #canvas-preview canvas {
         max-width: 100%;
         height: auto;
-        border-radius: var(--radius-lg);
         display: block;
       }
 
-      /* 右侧：控制面板 + 导出面板 */
       .right-panel {
         flex: 0 0 320px;
         display: flex;
@@ -224,49 +189,30 @@
       }
 
       /* ============================================================
-         prefers-reduced-motion 支持
+         prefers-reduced-motion
          ============================================================ */
       @media (prefers-reduced-motion: reduce) {
-        .spinner {
-          animation-duration: 1.5s;
-        }
-        * {
-          transition-duration: 0.01ms !important;
-        }
+        .spinner { animation-duration: 1.5s; }
+        * { transition-duration: 0.01ms !important; }
       }
 
       /* ============================================================
-         响应式适配
+         响应式
          ============================================================ */
       @media (max-width: 768px) {
-        body {
-          padding: 24px 12px;
-        }
-        .app-title {
-          font-size: 22px;
-        }
-        .adjust-layout {
-          gap: 16px;
-        }
-        .right-panel {
-          flex: 1 1 100%;
-          max-width: 100%;
-        }
+        body { padding: 24px 12px; }
+        .app-title { font-size: 26px; }
+        .right-panel { flex: 1 1 100%; max-width: 100%; }
       }
-
       @media (max-width: 375px) {
-        body {
-          padding: 16px 8px;
-        }
-        .app-title {
-          font-size: 20px;
-        }
+        body { padding: 16px 8px; }
+        .app-title { font-size: 22px; }
       }
     </style>
   </head>
   <body>
     <div id="app">
-      <h1 class="app-title">照片出框效果</h1>
+      <h1 class="app-title">照片出框<span>效果</span></h1>
       <div id="error-banner"></div>
       <div id="loading-indicator">
         <div class="spinner"></div>

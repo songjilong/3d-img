@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAUS — Creative Agency</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['Archivo', 'system-ui', 'sans-serif'],
+            body: ['Space Grotesk', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            pink: { brand: '#EC4899', light: '#FDF2F8' },
+            cyan: { brand: '#06B6D4' },
+            wine: '#831843',
+            brutal: {
+              black: '#0A0A0A',
+              yellow: '#FFEB3B',
+              red: '#FF5252',
+              blue: '#2196F3',
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* @author system */
+
+    /* ── 基础重置 ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+    /* ── 滚动动画 ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── 文字描边效果 ── */
+    .text-stroke {
+      -webkit-text-stroke: 2px #0A0A0A;
+      color: transparent;
+    }
+    .text-stroke:hover {
+      color: #EC4899;
+      -webkit-text-stroke: 0;
+    }
+
+    /* ── 跑马灯 ── */
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .marquee-track {
+      animation: marquee 20s linear infinite;
+    }
+
+    /* ── 硬阴影悬停 ── */
+    .brutal-card {
+      border: 3px solid #0A0A0A;
+      box-shadow: 6px 6px 0 #0A0A0A;
+      transition: box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .brutal-card:hover {
+      box-shadow: 10px 10px 0 #0A0A0A;
+      transform: translate(-2px, -2px);
+    }
+
+    /* ── 表单输入框焦点 ── */
+    .brutal-input:focus {
+      outline: none;
+      box-shadow: 4px 4px 0 #EC4899;
+      border-color: #EC4899;
+    }
+
+    /* ── 减少动画偏好 ── */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .marquee-track { animation: none; }
+      html { scroll-behavior: auto; }
+      .brutal-card { transition: none; }
+    }
+  </style>
+</head>
+<body class="bg-pink-light text-brutal-black font-body overflow-x-hidden">
+
+  <!-- ============================================================
+       导航栏
+       ============================================================ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-pink-light border-b-3 border-brutal-black" style="border-bottom-width: 3px;">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 flex items-center justify-between h-16">
+      <a href="#" class="font-heading font-black text-2xl tracking-tighter cursor-pointer">HAUS<span class="text-pink-brand">.</span></a>
+      <div class="hidden md:flex items-center gap-8 font-heading font-bold text-sm uppercase tracking-wider">
+        <a href="#work" class="hover:text-pink-brand cursor-pointer transition-colors duration-150">Work</a>
+        <a href="#about" class="hover:text-pink-brand cursor-pointer transition-colors duration-150">About</a>
+        <a href="#team" class="hover:text-pink-brand cursor-pointer transition-colors duration-150">Team</a>
+        <a href="#contact" class="hover:text-pink-brand cursor-pointer transition-colors duration-150">Contact</a>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden cursor-pointer p-2" aria-label="Open menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- 移动端菜单 -->
+    <div id="mobile-menu" class="hidden md:hidden border-t-3 border-brutal-black bg-pink-light" style="border-top-width: 3px;">
+      <div class="flex flex-col font-heading font-bold text-lg uppercase tracking-wider px-6 py-4 gap-4">
+        <a href="#work" class="cursor-pointer">Work</a>
+        <a href="#about" class="cursor-pointer">About</a>
+        <a href="#team" class="cursor-pointer">Team</a>
+        <a href="#contact" class="cursor-pointer">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       Hero 区域
+       ============================================================ -->
+  <section class="min-h-screen flex flex-col justify-center pt-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="reveal">
+      <p class="font-heading font-bold text-sm uppercase tracking-widest text-pink-brand mb-4">Creative Agency — Est. 2019</p>
+      <h1 class="font-heading font-black text-5xl sm:text-7xl md:text-8xl lg:text-9xl leading-none tracking-tighter mb-6">
+        WE MAKE<br/>
+        <span class="text-stroke cursor-pointer">BOLD</span> THINGS<br/>
+        <span class="text-pink-brand">HAPPEN</span><span class="text-cyan-brand">.</span>
+      </h1>
+      <p class="max-w-xl text-lg md:text-xl text-wine/70 mb-10 leading-relaxed">
+        Strategy, design, and technology for brands that refuse to blend in. We craft digital experiences that demand attention.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#work" class="brutal-card bg-brutal-black text-white font-heading font-bold text-sm uppercase tracking-wider px-8 py-4 cursor-pointer inline-block hover:bg-pink-brand">
+          View Our Work
+        </a>
+        <a href="#contact" class="brutal-card bg-white font-heading font-bold text-sm uppercase tracking-wider px-8 py-4 cursor-pointer inline-block hover:bg-brutal-yellow">
+          Start a Project
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       跑马灯
+       ============================================================ -->
+  <div class="border-y-3 border-brutal-black bg-brutal-black text-white py-4 overflow-hidden" style="border-top-width: 3px; border-bottom-width: 3px;">
+    <div class="flex whitespace-nowrap marquee-track" style="width: max-content;">
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Branding</span>
+      <span class="text-pink-brand text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Web Design</span>
+      <span class="text-cyan-brand text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Motion</span>
+      <span class="text-brutal-yellow text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Strategy</span>
+      <span class="text-brutal-red text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Development</span>
+      <span class="text-pink-brand text-3xl md:text-5xl">✦</span>
+      <!-- 重复一份实现无缝循环 -->
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Branding</span>
+      <span class="text-pink-brand text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Web Design</span>
+      <span class="text-cyan-brand text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Motion</span>
+      <span class="text-brutal-yellow text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Strategy</span>
+      <span class="text-brutal-red text-3xl md:text-5xl">✦</span>
+      <span class="font-heading font-black text-3xl md:text-5xl uppercase tracking-tight mx-8">Development</span>
+      <span class="text-pink-brand text-3xl md:text-5xl">✦</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Case Studies / Work 区域
+       ============================================================ -->
+  <section id="work" class="py-20 md:py-32 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="reveal mb-16">
+      <p class="font-heading font-bold text-sm uppercase tracking-widest text-pink-brand mb-2">Selected Work</p>
+      <h2 class="font-heading font-black text-4xl md:text-6xl tracking-tighter">Case Studies</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- 项目 1 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-[4/3] bg-gradient-to-br from-pink-brand to-brutal-red overflow-hidden">
+          <div class="w-full h-full flex items-center justify-center text-white font-heading font-black text-6xl md:text-8xl opacity-20 group-hover:opacity-40 transition-opacity duration-200 select-none">01</div>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-brutal-black text-white font-heading font-bold text-xs uppercase tracking-wider px-3 py-1">Branding</span>
+            <span class="bg-brutal-yellow font-heading font-bold text-xs uppercase tracking-wider px-3 py-1 border-2 border-brutal-black">2024</span>
+          </div>
+          <h3 class="font-heading font-black text-2xl tracking-tight mb-2">Neon Collective</h3>
+          <p class="text-wine/60 text-sm leading-relaxed">Complete brand identity and digital platform for an emerging art collective. From strategy to a living design system.</p>
+        </div>
+      </div>
+
+      <!-- 项目 2 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-[4/3] bg-gradient-to-br from-cyan-brand to-brutal-blue overflow-hidden">
+          <div class="w-full h-full flex items-center justify-center text-white font-heading font-black text-6xl md:text-8xl opacity-20 group-hover:opacity-40 transition-opacity duration-200 select-none">02</div>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-brutal-black text-white font-heading font-bold text-xs uppercase tracking-wider px-3 py-1">Web Design</span>
+            <span class="bg-brutal-yellow font-heading font-bold text-xs uppercase tracking-wider px-3 py-1 border-2 border-brutal-black">2024</span>
+          </div>
+          <h3 class="font-heading font-black text-2xl tracking-tight mb-2">Pulse Finance</h3>
+          <p class="text-wine/60 text-sm leading-relaxed">A fintech dashboard that breaks every boring convention. Data visualization meets brutalist aesthetics.</p>
+        </div>
+      </div>
+
+      <!-- 项目 3 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-[4/3] bg-gradient-to-br from-brutal-yellow to-orange-400 overflow-hidden">
+          <div class="w-full h-full flex items-center justify-center text-brutal-black font-heading font-black text-6xl md:text-8xl opacity-20 group-hover:opacity-40 transition-opacity duration-200 select-none">03</div>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-brutal-black text-white font-heading font-bold text-xs uppercase tracking-wider px-3 py-1">Motion</span>
+            <span class="bg-pink-brand text-white font-heading font-bold text-xs uppercase tracking-wider px-3 py-1 border-2 border-brutal-black">2023</span>
+          </div>
+          <h3 class="font-heading font-black text-2xl tracking-tight mb-2">Vortex Festival</h3>
+          <p class="text-wine/60 text-sm leading-relaxed">Motion identity and immersive web experience for a music festival. 3D visuals, generative art, and raw energy.</p>
+        </div>
+      </div>
+
+      <!-- 项目 4 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-[4/3] bg-gradient-to-br from-brutal-black to-gray-700 overflow-hidden">
+          <div class="w-full h-full flex items-center justify-center text-white font-heading font-black text-6xl md:text-8xl opacity-20 group-hover:opacity-40 transition-opacity duration-200 select-none">04</div>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-brutal-black text-white font-heading font-bold text-xs uppercase tracking-wider px-3 py-1">Strategy</span>
+            <span class="bg-cyan-brand text-white font-heading font-bold text-xs uppercase tracking-wider px-3 py-1 border-2 border-brutal-black">2023</span>
+          </div>
+          <h3 class="font-heading font-black text-2xl tracking-tight mb-2">Mono Studio</h3>
+          <p class="text-wine/60 text-sm leading-relaxed">Brand strategy and positioning for a design studio. Minimal identity with maximum impact.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       About / Philosophy 区域
+       ============================================================ -->
+  <section id="about" class="border-y-3 border-brutal-black bg-brutal-black text-white py-20 md:py-32 px-4 md:px-6 lg:px-8" style="border-top-width: 3px; border-bottom-width: 3px;">
+    <div class="max-w-7xl mx-auto">
+      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <p class="font-heading font-bold text-sm uppercase tracking-widest text-pink-brand mb-4">Our Philosophy</p>
+          <h2 class="font-heading font-black text-4xl md:text-6xl tracking-tighter mb-8 leading-tight">
+            Design should<br/>
+            <span class="text-brutal-yellow">provoke</span>,<br/>
+            not just please.
+          </h2>
+          <p class="text-white/60 text-lg leading-relaxed mb-6">
+            We believe the best work comes from tension — between beauty and rawness, structure and chaos, strategy and instinct. We don't make safe work. We make work that moves people.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <span class="border-2 border-white/30 px-4 py-2 font-heading font-bold text-xs uppercase tracking-wider">Strategy First</span>
+            <span class="border-2 border-white/30 px-4 py-2 font-heading font-bold text-xs uppercase tracking-wider">Design Led</span>
+            <span class="border-2 border-white/30 px-4 py-2 font-heading font-bold text-xs uppercase tracking-wider">Tech Driven</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="border-3 border-white/20 p-6" style="border-width: 3px;">
+            <p class="font-heading font-black text-5xl text-pink-brand mb-2">47+</p>
+            <p class="text-white/50 text-sm font-heading font-bold uppercase tracking-wider">Projects Shipped</p>
+          </div>
+          <div class="border-3 border-white/20 p-6" style="border-width: 3px;">
+            <p class="font-heading font-black text-5xl text-cyan-brand mb-2">12</p>
+            <p class="text-white/50 text-sm font-heading font-bold uppercase tracking-wider">Awards Won</p>
+          </div>
+          <div class="border-3 border-white/20 p-6" style="border-width: 3px;">
+            <p class="font-heading font-black text-5xl text-brutal-yellow mb-2">6</p>
+            <p class="text-white/50 text-sm font-heading font-bold uppercase tracking-wider">Years Running</p>
+          </div>
+          <div class="border-3 border-white/20 p-6" style="border-width: 3px;">
+            <p class="font-heading font-black text-5xl text-brutal-red mb-2">∞</p>
+            <p class="text-white/50 text-sm font-heading font-bold uppercase tracking-wider">Ideas Brewing</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>
+
+  <!-- ============================================================
+       Team 区域
+       ============================================================ -->
+  <section id="team" class="py-20 md:py-32 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="reveal mb-16">
+      <p class="font-heading font-bold text-sm uppercase tracking-widest text-pink-brand mb-2">The Crew</p>
+      <h2 class="font-heading font-black text-4xl md:text-6xl tracking-tighter">Meet the Team</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- 成员 1 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-square bg-gradient-to-br from-pink-brand to-pink-300 relative overflow-hidden">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-brutal-black text-white p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+            <p class="font-heading font-bold text-xs uppercase tracking-wider">Creative Director</p>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="font-heading font-black text-lg tracking-tight">Alex Rivera</h3>
+          <p class="text-wine/50 text-sm">Vision & Strategy</p>
+        </div>
+      </div>
+
+      <!-- 成员 2 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-square bg-gradient-to-br from-cyan-brand to-cyan-300 relative overflow-hidden">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-brutal-black text-white p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+            <p class="font-heading font-bold text-xs uppercase tracking-wider">Lead Designer</p>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="font-heading font-black text-lg tracking-tight">Sam Chen</h3>
+          <p class="text-wine/50 text-sm">Design & Systems</p>
+        </div>
+      </div>
+
+      <!-- 成员 3 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-square bg-gradient-to-br from-brutal-yellow to-orange-300 relative overflow-hidden">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-brutal-black text-white p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+            <p class="font-heading font-bold text-xs uppercase tracking-wider">Tech Lead</p>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="font-heading font-black text-lg tracking-tight">Jordan Park</h3>
+          <p class="text-wine/50 text-sm">Code & Architecture</p>
+        </div>
+      </div>
+
+      <!-- 成员 4 -->
+      <div class="reveal brutal-card bg-white cursor-pointer group">
+        <div class="aspect-square bg-gradient-to-br from-brutal-black to-gray-600 relative overflow-hidden">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-brutal-black text-white p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+            <p class="font-heading font-bold text-xs uppercase tracking-wider">Motion Designer</p>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="font-heading font-black text-lg tracking-tight">Morgan Lee</h3>
+          <p class="text-wine/50 text-sm">Motion & 3D</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Contact 区域
+       ============================================================ -->
+  <section id="contact" class="border-t-3 border-brutal-black bg-brutal-yellow py-20 md:py-32 px-4 md:px-6 lg:px-8" style="border-top-width: 3px;">
+    <div class="max-w-7xl mx-auto">
+      <div class="reveal grid grid-cols-1 lg:grid-cols-2 gap-16">
+        <div>
+          <p class="font-heading font-bold text-sm uppercase tracking-widest text-pink-brand mb-4">Get in Touch</p>
+          <h2 class="font-heading font-black text-4xl md:text-6xl tracking-tighter mb-6">
+            Let's build<br/>something<br/><span class="text-pink-brand">wild</span>.
+          </h2>
+          <p class="text-brutal-black/60 text-lg leading-relaxed mb-8 max-w-md">
+            Have a project in mind? We'd love to hear about it. Drop us a line and let's start a conversation.
+          </p>
+          <div class="flex flex-col gap-4 text-sm font-heading font-bold uppercase tracking-wider">
+            <a href="mailto:hello@example.com" class="flex items-center gap-3 cursor-pointer hover:text-pink-brand transition-colors duration-150">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              hello@example.com
+            </a>
+            <a href="tel:+10000000000" class="flex items-center gap-3 cursor-pointer hover:text-pink-brand transition-colors duration-150">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              +1 (000) 000-0000
+            </a>
+          </div>
+        </div>
+
+        <!-- 联系表单 -->
+        <form class="flex flex-col gap-5" onsubmit="event.preventDefault(); alert('Message sent! (Demo)');">
+          <div>
+            <label for="name" class="block font-heading font-bold text-xs uppercase tracking-wider mb-2">Name</label>
+            <input id="name" type="text" required placeholder="Your name"
+              class="brutal-input w-full border-3 border-brutal-black bg-white px-4 py-3 font-body text-sm placeholder:text-brutal-black/30" style="border-width: 3px;" />
+          </div>
+          <div>
+            <label for="email" class="block font-heading font-bold text-xs uppercase tracking-wider mb-2">Email</label>
+            <input id="email" type="email" required placeholder="you@example.com"
+              class="brutal-input w-full border-3 border-brutal-black bg-white px-4 py-3 font-body text-sm placeholder:text-brutal-black/30" style="border-width: 3px;" />
+          </div>
+          <div>
+            <label for="project" class="block font-heading font-bold text-xs uppercase tracking-wider mb-2">Project Type</label>
+            <select id="project" required
+              class="brutal-input w-full border-3 border-brutal-black bg-white px-4 py-3 font-body text-sm cursor-pointer" style="border-width: 3px;">
+              <option value="" disabled selected>Select a type</option>
+              <option>Branding</option>
+              <option>Web Design</option>
+              <option>Motion Design</option>
+              <option>Full Package</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="message" class="block font-heading font-bold text-xs uppercase tracking-wider mb-2">Message</label>
+            <textarea id="message" rows="4" required placeholder="Tell us about your project..."
+              class="brutal-input w-full border-3 border-brutal-black bg-white px-4 py-3 font-body text-sm placeholder:text-brutal-black/30 resize-none" style="border-width: 3px;"></textarea>
+          </div>
+          <button type="submit"
+            class="brutal-card bg-brutal-black text-white font-heading font-bold text-sm uppercase tracking-wider px-8 py-4 cursor-pointer hover:bg-pink-brand self-start">
+            Send Message
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Footer
+       ============================================================ -->
+  <footer class="bg-brutal-black text-white py-12 px-4 md:px-6 lg:px-8 border-t-3 border-pink-brand" style="border-top-width: 3px;">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <p class="font-heading font-black text-2xl tracking-tighter">HAUS<span class="text-pink-brand">.</span></p>
+      <div class="flex items-center gap-6">
+        <a href="#" class="cursor-pointer hover:text-pink-brand transition-colors duration-150" aria-label="Twitter">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+        </a>
+        <a href="#" class="cursor-pointer hover:text-pink-brand transition-colors duration-150" aria-label="Instagram">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="#" class="cursor-pointer hover:text-pink-brand transition-colors duration-150" aria-label="Dribbble">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M19.13 5.09C15.22 9.14 10 10.44 2.25 10.94"/><path d="M21.75 12.84c-6.62-1.41-12.14 1-16.38 6.32"/><path d="M8.56 2.75c4.37 6 6 9.42 8 17.72"/></svg>
+        </a>
+      </div>
+      <p class="text-white/40 text-sm font-body">&copy; 2024 HAUS. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       JavaScript: 滚动动画 + 移动端菜单
+       ============================================================ -->
+  <script>
+    // @author system
+
+    // 滚动触发动画（IntersectionObserver）
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+
+    // 移动端菜单切换
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // 点击菜单链接后关闭菜单
+    mobileMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 // ============================================================
-// 照片出框效果 - 调整控制面板
+// 照片出框效果 - 调整控制面板（Neubrutalism 风格）
 // @author system
 // ============================================================
 
@@ -21,33 +21,32 @@ export interface ControlUpdates {
 
 const LABEL_STYLE = `
   display: flex; justify-content: space-between; align-items: center;
-  color: var(--text-secondary, #a0a0b8); font-size: 12px;
-  margin-bottom: 6px; user-select: none; font-weight: 500;
-  letter-spacing: 0.02em;
+  color: var(--text-primary, #0A0A0A);
+  font-family: var(--font-heading, 'Archivo', sans-serif);
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 6px; user-select: none;
 `;
 
 const SLIDER_STYLE = `
-  width: 100%; accent-color: var(--accent, #7c6fff); cursor: pointer;
-  height: 4px; border-radius: 2px;
+  width: 100%; accent-color: var(--accent, #EC4899);
+  cursor: pointer; height: 4px;
 `;
 
 const TEXT_INPUT_STYLE = `
   width: 100%; padding: 9px 12px;
-  border-radius: var(--radius-sm, 8px);
-  border: 1px solid var(--border-default, rgba(255,255,255,0.1));
-  background-color: var(--bg-surface, rgba(255,255,255,0.035));
-  color: var(--text-primary, #f0f0f5);
-  font-size: 13px; font-family: inherit;
+  border: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
+  background-color: var(--bg-surface, #FFFFFF);
+  color: var(--text-primary, #0A0A0A);
+  font-size: 13px; font-family: var(--font-body, 'Space Grotesk', sans-serif);
   outline: none; box-sizing: border-box;
-  transition: border-color var(--transition-fast, 150ms ease),
-              box-shadow var(--transition-fast, 150ms ease);
+  transition: box-shadow var(--transition-fast, 150ms ease);
 `;
 
 const COLOR_INPUT_STYLE = `
   width: 36px; height: 28px;
-  border: 1px solid var(--border-default, rgba(255,255,255,0.1));
-  border-radius: 6px; background: transparent;
-  cursor: pointer; padding: 2px;
+  border: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
+  background: transparent; cursor: pointer; padding: 1px;
 `;
 
 // ── 辅助函数 ──
@@ -58,32 +57,26 @@ function createControlGroup(labelText: string): {
 } {
   const group = document.createElement('div');
   group.style.cssText = 'display: flex; flex-direction: column;';
-
   const label = document.createElement('label');
   label.textContent = labelText;
   label.style.cssText = LABEL_STYLE;
   group.appendChild(label);
-
   return { group, label };
 }
 
 function createSliderControl(
-  labelText: string,
-  min: number,
-  max: number,
-  step: number,
-  value: number,
-  unit: string,
+  labelText: string, min: number, max: number, step: number,
+  value: number, unit: string,
   onInput: (value: number) => void,
 ): { element: HTMLDivElement; slider: HTMLInputElement } {
   const { group, label } = createControlGroup(labelText);
-
   const decimals = step < 1 ? 1 : 0;
+
   const valueSpan = document.createElement('span');
   valueSpan.textContent = `${value.toFixed(decimals)}${unit}`;
   valueSpan.style.cssText = `
-    color: var(--accent, #7c6fff); font-size: 12px;
-    font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--accent, #EC4899); font-size: 11px;
+    font-variant-numeric: tabular-nums; font-weight: 900;
   `;
   label.appendChild(valueSpan);
 
@@ -118,21 +111,19 @@ const FRAME_PRESETS = [
 ];
 
 function createColorPresets(
-  presets: string[],
-  currentValue: string,
+  presets: string[], currentValue: string,
   onSelect: (color: string) => void,
 ): HTMLDivElement {
   const row = document.createElement('div');
-  row.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;';
+  row.style.cssText = 'display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;';
 
   const swatches: HTMLDivElement[] = [];
 
-  /** 更新所有色块的选中状态 */
   const updateSwatchStyles = (selectedColor: string) => {
     swatches.forEach((sw, i) => {
       const match = presets[i].toLowerCase() === selectedColor.toLowerCase();
-      sw.style.border = `2px solid ${match ? 'var(--accent, #7c6fff)' : 'var(--border-subtle, rgba(255,255,255,0.06))'}`;
-      sw.style.boxShadow = match ? '0 0 8px rgba(124,111,255,0.3)' : 'none';
+      sw.style.border = `var(--border-width, 3px) solid ${match ? 'var(--accent, #EC4899)' : 'var(--border-brutal, #0A0A0A)'}`;
+      sw.style.boxShadow = match ? '3px 3px 0 var(--accent, #EC4899)' : '2px 2px 0 var(--border-brutal, #0A0A0A)';
     });
   };
 
@@ -140,14 +131,12 @@ function createColorPresets(
     const swatch = document.createElement('div');
     const isSelected = color.toLowerCase() === currentValue.toLowerCase();
     swatch.style.cssText = `
-      width: 24px; height: 24px;
-      border-radius: 6px;
+      width: 26px; height: 26px;
       background-color: ${color};
       cursor: pointer;
-      border: 2px solid ${isSelected ? 'var(--accent, #7c6fff)' : 'var(--border-subtle, rgba(255,255,255,0.06))'};
-      transition: border-color var(--transition-fast, 150ms ease),
-                  transform var(--transition-fast, 150ms ease);
-      box-shadow: ${isSelected ? '0 0 8px rgba(124,111,255,0.3)' : 'none'};
+      border: var(--border-width, 3px) solid ${isSelected ? 'var(--accent, #EC4899)' : 'var(--border-brutal, #0A0A0A)'};
+      box-shadow: ${isSelected ? '3px 3px 0 var(--accent, #EC4899)' : '2px 2px 0 var(--border-brutal, #0A0A0A)'};
+      transition: transform var(--transition-fast, 150ms ease);
     `;
     swatch.title = color;
     swatch.addEventListener('click', () => {
@@ -155,37 +144,24 @@ function createColorPresets(
       onSelect(color);
     });
     swatch.addEventListener('mouseenter', () => {
-      const active = swatch.style.boxShadow.includes('rgba(124');
-      if (!active) {
-        swatch.style.borderColor = 'rgba(255,255,255,0.3)';
-        swatch.style.transform = 'scale(1.1)';
-      }
+      swatch.style.transform = 'translate(-1px, -1px)';
     });
     swatch.addEventListener('mouseleave', () => {
-      const active = swatch.style.boxShadow.includes('rgba(124');
-      if (!active) {
-        swatch.style.borderColor = 'var(--border-subtle, rgba(255,255,255,0.06))';
-      }
-      swatch.style.transform = 'scale(1)';
+      swatch.style.transform = 'translate(0, 0)';
     });
     swatches.push(swatch);
     row.appendChild(swatch);
   }
 
-  // 将更新方法挂到 DOM 元素上，供外部 color picker 同步调用
   (row as any).updateSelection = updateSwatchStyles;
-
   return row;
 }
 
-// ── 重置图标 SVG ──
-const RESET_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+// ── 重置图标 ──
+const RESET_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
 
 // ── 主函数 ──
 
-/**
- * 创建调整控制面板
- */
 export function createControlsPanel(
   container: HTMLElement,
   state: AppState,
@@ -196,24 +172,25 @@ export function createControlsPanel(
   const wrapper = document.createElement('div');
   wrapper.style.cssText = `
     width: 100%; max-width: 320px;
-    display: flex; flex-direction: column; gap: 16px;
+    display: flex; flex-direction: column; gap: 14px;
     padding: 18px;
-    background: var(--bg-glass, rgba(16,16,40,0.7));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: var(--radius-lg, 16px);
-    border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+    background: var(--bg-surface, #FFFFFF);
+    border: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
+    box-shadow: var(--shadow-brutal, 6px 6px 0 #0A0A0A);
     box-sizing: border-box;
-    box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.3));
   `;
 
   // 标题
   const title = document.createElement('h3');
   title.textContent = '调整参数';
   title.style.cssText = `
-    color: var(--text-primary, #f0f0f5);
-    font-size: 15px; margin: 0; font-weight: 600;
-    text-align: center; letter-spacing: -0.01em;
+    color: var(--text-primary, #0A0A0A);
+    font-family: var(--font-heading, 'Archivo', sans-serif);
+    font-size: 16px; margin: 0; font-weight: 900;
+    text-align: center; text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding-bottom: 10px;
+    border-bottom: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
   `;
   wrapper.appendChild(title);
 
@@ -221,14 +198,14 @@ export function createControlsPanel(
   const divider = () => {
     const hr = document.createElement('div');
     hr.style.cssText = `
-      height: 1px; width: 100%;
-      background: var(--border-subtle, rgba(255,255,255,0.06));
-      margin: 2px 0;
+      height: 0; width: 100%;
+      border-top: 2px dashed var(--border-brutal, #0A0A0A);
+      opacity: 0.2; margin: 2px 0;
     `;
     return hr;
   };
 
-  // ── 位置与缩放 ──
+  // ── 滑块控件 ──
   const { element: offsetXEl, slider: offsetXSlider } = createSliderControl(
     '水平偏移', -200, 200, 1, state.photoOffset.x, 'px',
     (v) => onChange({ photoOffset: { x: v, y: parseFloat(offsetYSlider.value) } }),
@@ -269,9 +246,8 @@ export function createControlsPanel(
   const colorValue = document.createElement('span');
   colorValue.textContent = state.backgroundColor;
   colorValue.style.cssText = `
-    color: var(--text-muted, #6b6b80); font-size: 12px;
-    font-family: 'SF Mono', 'Cascadia Code', monospace;
-    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, rgba(131,24,67,0.5)); font-size: 12px;
+    font-family: monospace; font-variant-numeric: tabular-nums;
   `;
 
   colorInput.addEventListener('input', () => {
@@ -304,9 +280,8 @@ export function createControlsPanel(
   const frameColorValue = document.createElement('span');
   frameColorValue.textContent = state.frameConfig.frameColor;
   frameColorValue.style.cssText = `
-    color: var(--text-muted, #6b6b80); font-size: 12px;
-    font-family: 'SF Mono', 'Cascadia Code', monospace;
-    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, rgba(131,24,67,0.5)); font-size: 12px;
+    font-family: monospace; font-variant-numeric: tabular-nums;
   `;
 
   frameColorInput.addEventListener('input', () => {
@@ -337,16 +312,14 @@ export function createControlsPanel(
   metaInput.style.cssText = TEXT_INPUT_STYLE;
 
   metaInput.addEventListener('focus', () => {
-    metaInput.style.borderColor = 'var(--border-focus, rgba(124,111,255,0.5))';
-    metaInput.style.boxShadow = '0 0 0 3px rgba(124,111,255,0.1)';
+    metaInput.style.boxShadow = '4px 4px 0 var(--accent, #EC4899)';
+    metaInput.style.borderColor = 'var(--accent, #EC4899)';
   });
   metaInput.addEventListener('blur', () => {
-    metaInput.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
     metaInput.style.boxShadow = 'none';
+    metaInput.style.borderColor = 'var(--border-brutal, #0A0A0A)';
   });
-  metaInput.addEventListener('input', () => {
-    onChange({ metadataText: metaInput.value });
-  });
+  metaInput.addEventListener('input', () => onChange({ metadataText: metaInput.value }));
 
   metaGroup.appendChild(metaInput);
   wrapper.appendChild(metaGroup);
@@ -364,26 +337,29 @@ export function createControlsPanel(
   resetBtn.innerHTML = `${RESET_ICON}<span>重置为默认值</span>`;
   resetBtn.style.cssText = `
     padding: 9px 20px;
-    border-radius: var(--radius-sm, 8px);
-    border: 1px solid var(--border-default, rgba(255,255,255,0.1));
-    background-color: transparent;
-    color: var(--text-secondary, #a0a0b8);
-    font-size: 13px; font-weight: 500;
+    border: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
+    background-color: var(--bg-surface, #FFFFFF);
+    color: var(--text-primary, #0A0A0A);
+    font-family: var(--font-heading, 'Archivo', sans-serif);
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
     cursor: pointer;
     transition: all var(--transition-fast, 150ms ease);
     align-self: center;
     display: flex; align-items: center; gap: 6px;
-    font-family: inherit;
+    box-shadow: var(--shadow-brutal-sm, 4px 4px 0 #0A0A0A);
   `;
   resetBtn.addEventListener('mouseenter', () => {
-    resetBtn.style.borderColor = 'var(--error, #ff6b6b)';
-    resetBtn.style.color = 'var(--error, #ff6b6b)';
-    resetBtn.style.backgroundColor = 'rgba(255,107,107,0.06)';
+    resetBtn.style.backgroundColor = 'var(--accent-red, #FF5252)';
+    resetBtn.style.color = '#FFFFFF';
+    resetBtn.style.boxShadow = '6px 6px 0 var(--border-brutal, #0A0A0A)';
+    resetBtn.style.transform = 'translate(-1px, -1px)';
   });
   resetBtn.addEventListener('mouseleave', () => {
-    resetBtn.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
-    resetBtn.style.color = 'var(--text-secondary, #a0a0b8)';
-    resetBtn.style.backgroundColor = 'transparent';
+    resetBtn.style.backgroundColor = 'var(--bg-surface, #FFFFFF)';
+    resetBtn.style.color = 'var(--text-primary, #0A0A0A)';
+    resetBtn.style.boxShadow = 'var(--shadow-brutal-sm, 4px 4px 0 #0A0A0A)';
+    resetBtn.style.transform = 'translate(0, 0)';
   });
   resetBtn.addEventListener('click', () => onChange({ reset: true }));
   wrapper.appendChild(resetBtn);

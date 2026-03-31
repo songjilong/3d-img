@@ -481,33 +481,33 @@ const PLAY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16
 const STOP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
 
 /**
- * 创建 Live Photo 动画播放按钮
+ * 创建 Live Photo 动画播放按钮（Neubrutalism 风格）
  * @author system
  */
 function createAnimationButton(): void {
   const animBtn = document.createElement('button');
   animBtn.innerHTML = `${PLAY_ICON}<span>播放 Live Photo</span>`;
   animBtn.style.cssText = `
-    padding: 10px 24px; border-radius: var(--radius-sm, 8px);
-    border: 1px solid var(--border-default, rgba(255,255,255,0.1));
-    background-color: var(--bg-surface, rgba(255,255,255,0.035));
-    color: var(--text-secondary, #a0a0b8);
-    font-size: 13px; font-weight: 500;
+    padding: 10px 24px;
+    border: var(--border-width, 3px) solid var(--border-brutal, #0A0A0A);
+    background-color: var(--accent-cyan, #06B6D4);
+    color: #FFFFFF;
+    font-family: var(--font-heading, 'Archivo', sans-serif);
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
     cursor: pointer;
     transition: all var(--transition-fast, 150ms ease);
     width: 100%; max-width: 320px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    font-family: inherit;
+    box-shadow: var(--shadow-brutal-sm, 4px 4px 0 #0A0A0A);
   `;
   animBtn.addEventListener('mouseenter', () => {
-    animBtn.style.borderColor = 'var(--accent, #7c6fff)';
-    animBtn.style.backgroundColor = 'var(--accent-glow, rgba(124,111,255,0.12))';
-    animBtn.style.color = 'var(--text-primary, #f0f0f5)';
+    animBtn.style.boxShadow = 'var(--shadow-brutal, 6px 6px 0 #0A0A0A)';
+    animBtn.style.transform = 'translate(-1px, -1px)';
   });
   animBtn.addEventListener('mouseleave', () => {
-    animBtn.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
-    animBtn.style.backgroundColor = 'var(--bg-surface, rgba(255,255,255,0.035))';
-    animBtn.style.color = 'var(--text-secondary, #a0a0b8)';
+    animBtn.style.boxShadow = 'var(--shadow-brutal-sm, 4px 4px 0 #0A0A0A)';
+    animBtn.style.transform = 'translate(0, 0)';
   });
 
   animBtn.addEventListener('click', () => {
@@ -525,7 +525,7 @@ function createAnimationButton(): void {
 
     // 创建动画用的 Canvas
     const animCanvas = document.createElement('canvas');
-    animCanvas.style.cssText = 'max-width: 100%; height: auto; border-radius: 8px;';
+    animCanvas.style.cssText = 'max-width: 100%; height: auto; display: block;';
     canvasPreview.innerHTML = '';
     canvasPreview.appendChild(animCanvas);
 
