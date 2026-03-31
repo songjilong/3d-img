@@ -19,6 +19,8 @@ export interface ControlUpdates {
   frameColor?: string;
   /** 拍摄参数文字 */
   metadataText?: string;
+  /** 拍摄参数文字大小 */
+  metadataFontSize?: number;
   /** 是否重置 */
   reset?: boolean;
 }
@@ -109,9 +111,10 @@ function createSliderControl(
 ): { element: HTMLDivElement; slider: HTMLInputElement } {
   const { group, label } = createControlGroup(labelText);
 
-  // 数值显示
+  // 数值显示（根据步长决定小数位数）
+  const decimals = step < 1 ? 1 : 0;
   const valueSpan = document.createElement('span');
-  valueSpan.textContent = ` ${value}${unit}`;
+  valueSpan.textContent = ` ${value.toFixed(decimals)}${unit}`;
   valueSpan.style.cssText = 'color: #7c6fff; font-size: 12px;';
   label.appendChild(valueSpan);
 
@@ -126,7 +129,7 @@ function createSliderControl(
 
   slider.addEventListener('input', () => {
     const v = parseFloat(slider.value);
-    valueSpan.textContent = ` ${v}${unit}`;
+    valueSpan.textContent = ` ${v.toFixed(decimals)}${unit}`;
     onInput(v);
   });
 
@@ -255,15 +258,18 @@ export function createControlsPanel(
   );
   wrapper.appendChild(offsetYEl);
 
-  // ---- 3. 照片缩放 ----
+  // ---- 3. 照片缩放（相对于默认值的倍数，1.0x = 默认大小）----
+  // 计算默认缩放基准值
+  const baseScale = state.photoScale; // 当前值即为默认计算值
+  const relativeScale = 1.0; // 默认显示 1.0x
   const { element: scaleEl } = createSliderControl(
     '照片缩放',
     0.5,
-    3.0,
+    2.0,
     0.1,
-    state.photoScale,
+    relativeScale,
     'x',
-    (v) => onChange({ photoScale: v }),
+    (v) => onChange({ photoScale: baseScale * v }),
   );
   wrapper.appendChild(scaleEl);
 
@@ -367,6 +373,18 @@ export function createControlsPanel(
 
   metaGroup.appendChild(metaInput);
   wrapper.appendChild(metaGroup);
+
+  // ---- 6b. 文字大小 ----
+  const { element: fontSizeEl } = createSliderControl(
+    '文字大小',
+    12,
+    48,
+    1,
+    state.metadataFontSize,
+    'px',
+    (v) => onChange({ metadataFontSize: v }),
+  );
+  wrapper.appendChild(fontSizeEl);
 
   // ---- 7. 重置按钮 ----
   const resetBtn = document.createElement('button');

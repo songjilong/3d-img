@@ -21,4 +21,6 @@ export const DEFAULT_CONFIG = {
   DEFAULT_SCALE: 1.0,
   /** 默认导出格式 */
   DEFAULT_EXPORT_FORMAT: 'png' as ExportFormat,
+  /** 默认拍摄参数文字大小 */
+  DEFAULT_METADATA_FONT_SIZE: 24,
 } as const;

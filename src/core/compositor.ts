@@ -2,8 +2,6 @@ import type { CompositeParams, ExportFormat } from '../types';
 
 // 元数据文字颜色
 const METADATA_TEXT_COLOR = '#666666';
-// 元数据文字字体
-const METADATA_FONT = '14px sans-serif';
 // 相框在背景中的占比（相框宽度占背景宽度的比例）
 const FRAME_RATIO = 0.75;
 
@@ -84,7 +82,7 @@ export function compose(params: CompositeParams): HTMLCanvasElement {
   drawPopOutLayer(ctx, photo, mask, photoRect, photoDrawX, photoDrawY, drawWidth, drawHeight, photoScale);
 
   // ── 绘制元数据文字 ──
-  drawMetadata(ctx, metadataText, metadataRect);
+  drawMetadata(ctx, metadataText, metadataRect, params.metadataFontSize);
 
   // 恢复坐标系
   ctx.restore();
@@ -177,13 +175,14 @@ function drawMetadata(
   ctx: CanvasRenderingContext2D,
   text: string,
   metadataRect: { x: number; y: number; width: number; height: number },
+  fontSize: number,
 ): void {
   if (!text) {
     return;
   }
 
   ctx.fillStyle = METADATA_TEXT_COLOR;
-  ctx.font = METADATA_FONT;
+  ctx.font = `${fontSize}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(

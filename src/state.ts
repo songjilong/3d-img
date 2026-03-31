@@ -19,6 +19,7 @@ const state: AppState = {
   frameLayout: null,
   exifData: null,
   customMetadataText: null,
+  metadataFontSize: DEFAULT_CONFIG.DEFAULT_METADATA_FONT_SIZE,
   photoOffset: { x: 0, y: 0 },
   photoScale: DEFAULT_CONFIG.DEFAULT_SCALE,
   backgroundColor: DEFAULT_CONFIG.DEFAULT_BG_COLOR,

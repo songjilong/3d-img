@@ -132,6 +132,7 @@ function recompose(): void {
     photoOffset: state.photoOffset,
     photoScale: state.photoScale,
     metadataText: getMetadataText(),
+    metadataFontSize: state.metadataFontSize,
   });
 
   // 更新预览区域
@@ -160,6 +161,7 @@ function handleControlChange(updates: Partial<ControlUpdates>): void {
     state.customMetadataText = null;
     state.backgroundColor = '#1a1a2e';
     state.frameConfig.frameColor = '#FFFFFF';
+    state.metadataFontSize = 24;
     // 重新计算默认出框参数
     const defaults = computeDefaultParams();
     updatePhotoOffset(defaults.offset);
@@ -202,6 +204,11 @@ function handleControlChange(updates: Partial<ControlUpdates>): void {
   // 更新拍摄参数文字
   if (updates.metadataText != null) {
     state.customMetadataText = updates.metadataText;
+  }
+
+  // 更新文字大小
+  if (updates.metadataFontSize != null) {
+    state.metadataFontSize = updates.metadataFontSize;
   }
 
   recompose();
@@ -269,6 +276,7 @@ async function handleExport(format: ExportFormat): Promise<void> {
         photoOffset: state.photoOffset,
         photoScale: state.photoScale,
         metadataText: getMetadataText(),
+        metadataFontSize: state.metadataFontSize,
       });
 
       const blob = await exportImage(canvas, format);
@@ -462,6 +470,7 @@ function getCurrentCompositeParams(): CompositeParams | null {
     photoOffset: state.photoOffset,
     photoScale: state.photoScale,
     metadataText: getMetadataText(),
+    metadataFontSize: state.metadataFontSize,
   };
 }
 

@@ -106,6 +106,8 @@ export interface CompositeParams {
   photoScale: number;
   /** 拍摄参数文字 */
   metadataText: string;
+  /** 拍摄参数文字大小（像素） */
+  metadataFontSize: number;
 }
 
 /** 导出格式 */
@@ -163,6 +165,8 @@ export interface AppState {
   exifData: ExifData | null;
   /** 用户自定义的参数展示文字 */
   customMetadataText: string | null;
+  /** 拍摄参数文字大小 */
+  metadataFontSize: number;
   /** 照片位置偏移 */
   photoOffset: { x: number; y: number };
   /** 照片缩放比例 */
