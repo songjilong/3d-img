@@ -33,6 +33,11 @@ const errorBanner = document.getElementById('error-banner')!;
 const canvasPreview = document.getElementById('canvas-preview')!;
 const controlsContainer = document.getElementById('controls-container')!;
 const exportContainer = document.getElementById('export-container')!;
+const heroSection = document.getElementById('hero-section')!;
+const featuresSection = document.getElementById('features-section')!;
+const workspaceDivider = document.getElementById('workspace-divider')!;
+const workspaceTitle = document.getElementById('workspace-title')!;
+const startBtn = document.getElementById('start-btn')!;
 
 /** 所有阶段对应的 DOM 区域映射 */
 const stageSections: Record<string, HTMLElement> = {
@@ -62,6 +67,20 @@ function showStage(stage: ProcessStage): void {
 
   // 隐藏错误提示
   errorBanner.classList.remove('active');
+
+  // 进入工作阶段时隐藏首页内容
+  if (stage !== 'upload' || stageUpload.innerHTML !== '') {
+    heroSection.style.display = 'none';
+    featuresSection.style.display = 'none';
+    workspaceDivider.style.display = 'block';
+    workspaceTitle.style.display = 'block';
+  }
+
+  // 调整阶段隐藏工作区标题
+  if (stage === 'adjusting' || stage === 'exporting') {
+    workspaceTitle.style.display = 'none';
+    workspaceDivider.style.display = 'none';
+  }
 
   // 显示目标阶段
   const target = stageSections[stage];
@@ -558,8 +577,18 @@ function createAnimationButton(): void {
 
 /** 初始化应用 */
 function init(): void {
-  // 创建上传界面
-  createUploadUI(stageUpload, handleFileAccepted);
+  // "开始制作"按钮：隐藏首页，显示上传区域
+  startBtn.addEventListener('click', () => {
+    heroSection.style.display = 'none';
+    featuresSection.style.display = 'none';
+    workspaceDivider.style.display = 'block';
+    workspaceTitle.style.display = 'block';
+    stageUpload.classList.add('active');
+    // 创建上传界面（延迟到点击时创建）
+    if (stageUpload.innerHTML === '') {
+      createUploadUI(stageUpload, handleFileAccepted);
+    }
+  });
 }
 
 // 启动应用
