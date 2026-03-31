@@ -1,85 +1,63 @@
 // ============================================================
 // 照片出框效果 - 调整控制面板
-// 提供照片位置、缩放、边框宽度、背景颜色、拍摄参数文字编辑和重置功能
+// @author system
 // ============================================================
 
 import type { AppState } from '../types';
 
 /** 控制面板回调更新接口 */
 export interface ControlUpdates {
-  /** 照片偏移量 */
   photoOffset?: { x: number; y: number };
-  /** 照片缩放比例 */
   photoScale?: number;
-  /** 相框边框宽度 */
   borderWidth?: number;
-  /** 背景颜色 */
   backgroundColor?: string;
-  /** 相框颜色 */
   frameColor?: string;
-  /** 拍摄参数文字 */
   metadataText?: string;
-  /** 拍摄参数文字大小 */
   metadataFontSize?: number;
-  /** 是否重置 */
   reset?: boolean;
 }
 
-// ------------------------------------------------------------
-// 样式常量
-// ------------------------------------------------------------
+// ── 样式常量 ──
 
-/** 控件标签样式 */
-const LABEL_STYLE =
-  'display: block; color: #ccc; font-size: 13px; margin-bottom: 6px; user-select: none;';
+const LABEL_STYLE = `
+  display: flex; justify-content: space-between; align-items: center;
+  color: var(--text-secondary, #a0a0b8); font-size: 12px;
+  margin-bottom: 6px; user-select: none; font-weight: 500;
+  letter-spacing: 0.02em;
+`;
 
-/** 滑块输入框样式 */
 const SLIDER_STYLE = `
-  width: 100%;
-  accent-color: #7c6fff;
-  cursor: pointer;
+  width: 100%; accent-color: var(--accent, #7c6fff); cursor: pointer;
+  height: 4px; border-radius: 2px;
 `;
 
-/** 文本输入框样式 */
 const TEXT_INPUT_STYLE = `
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #555;
-  background-color: rgba(255, 255, 255, 0.06);
-  color: #eee;
-  font-size: 13px;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
+  width: 100%; padding: 9px 12px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+  background-color: var(--bg-surface, rgba(255,255,255,0.035));
+  color: var(--text-primary, #f0f0f5);
+  font-size: 13px; font-family: inherit;
+  outline: none; box-sizing: border-box;
+  transition: border-color var(--transition-fast, 150ms ease),
+              box-shadow var(--transition-fast, 150ms ease);
 `;
 
-/** 颜色选择器样式 */
 const COLOR_INPUT_STYLE = `
-  width: 48px;
-  height: 32px;
-  border: 1px solid #555;
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-  padding: 2px;
+  width: 36px; height: 28px;
+  border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+  border-radius: 6px; background: transparent;
+  cursor: pointer; padding: 2px;
 `;
 
-// ------------------------------------------------------------
-// 辅助函数
-// ------------------------------------------------------------
+// ── 辅助函数 ──
 
-/**
- * 创建一个控件分组容器
- * @param labelText 标签文字
- * @returns 包含 group 容器和 label 元素的对象
- */
 function createControlGroup(labelText: string): {
   group: HTMLDivElement;
   label: HTMLLabelElement;
 } {
   const group = document.createElement('div');
-  group.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+  group.style.cssText = 'display: flex; flex-direction: column;';
 
   const label = document.createElement('label');
   label.textContent = labelText;
@@ -89,17 +67,6 @@ function createControlGroup(labelText: string): {
   return { group, label };
 }
 
-/**
- * 创建带数值显示的滑块控件
- * @param labelText 标签文字
- * @param min 最小值
- * @param max 最大值
- * @param step 步长
- * @param value 初始值
- * @param unit 单位后缀
- * @param onInput 值变化回调
- * @returns 控件分组 DOM 元素
- */
 function createSliderControl(
   labelText: string,
   min: number,
@@ -111,14 +78,15 @@ function createSliderControl(
 ): { element: HTMLDivElement; slider: HTMLInputElement } {
   const { group, label } = createControlGroup(labelText);
 
-  // 数值显示（根据步长决定小数位数）
   const decimals = step < 1 ? 1 : 0;
   const valueSpan = document.createElement('span');
-  valueSpan.textContent = ` ${value.toFixed(decimals)}${unit}`;
-  valueSpan.style.cssText = 'color: #7c6fff; font-size: 12px;';
+  valueSpan.textContent = `${value.toFixed(decimals)}${unit}`;
+  valueSpan.style.cssText = `
+    color: var(--accent, #7c6fff); font-size: 12px;
+    font-variant-numeric: tabular-nums; font-weight: 600;
+  `;
   label.appendChild(valueSpan);
 
-  // 滑块
   const slider = document.createElement('input');
   slider.type = 'range';
   slider.min = String(min);
@@ -129,7 +97,7 @@ function createSliderControl(
 
   slider.addEventListener('input', () => {
     const v = parseFloat(slider.value);
-    valueSpan.textContent = ` ${v.toFixed(decimals)}${unit}`;
+    valueSpan.textContent = `${v.toFixed(decimals)}${unit}`;
     onInput(v);
   });
 
@@ -137,55 +105,52 @@ function createSliderControl(
   return { element: group, slider };
 }
 
-// ------------------------------------------------------------
-// 预设颜色
-// ------------------------------------------------------------
+// ── 预设颜色 ──
 
-/** 背景常用颜色 */
 const BG_PRESETS = [
   '#1a1a2e', '#0f0f23', '#2d2d44', '#1e3a5f',
   '#3b1f2b', '#1a3c34', '#000000', '#f5f5f5',
 ];
 
-/** 相框常用颜色 */
 const FRAME_PRESETS = [
   '#FFFFFF', '#F5F5DC', '#E8E0D0', '#D4C5A9',
   '#333333', '#1a1a1a', '#FFD700', '#C0C0C0',
 ];
 
-/**
- * 创建预设颜色色块行
- * @param presets 预设颜色数组
- * @param currentValue 当前选中的颜色值
- * @param onSelect 选中颜色的回调
- * @returns 色块行 DOM 元素
- */
 function createColorPresets(
   presets: string[],
   currentValue: string,
   onSelect: (color: string) => void,
 ): HTMLDivElement {
   const row = document.createElement('div');
-  row.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;';
+  row.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;';
 
   for (const color of presets) {
     const swatch = document.createElement('div');
     const isSelected = color.toLowerCase() === currentValue.toLowerCase();
     swatch.style.cssText = `
       width: 24px; height: 24px;
-      border-radius: 4px;
+      border-radius: 6px;
       background-color: ${color};
       cursor: pointer;
-      border: 2px solid ${isSelected ? '#7c6fff' : 'rgba(255,255,255,0.15)'};
-      transition: border-color 0.15s;
+      border: 2px solid ${isSelected ? 'var(--accent, #7c6fff)' : 'var(--border-subtle, rgba(255,255,255,0.06))'};
+      transition: border-color var(--transition-fast, 150ms ease),
+                  transform var(--transition-fast, 150ms ease);
+      box-shadow: ${isSelected ? '0 0 8px rgba(124,111,255,0.3)' : 'none'};
     `;
     swatch.title = color;
     swatch.addEventListener('click', () => onSelect(color));
     swatch.addEventListener('mouseenter', () => {
-      if (!isSelected) swatch.style.borderColor = 'rgba(255,255,255,0.4)';
+      if (!isSelected) {
+        swatch.style.borderColor = 'rgba(255,255,255,0.3)';
+        swatch.style.transform = 'scale(1.1)';
+      }
     });
     swatch.addEventListener('mouseleave', () => {
-      if (!isSelected) swatch.style.borderColor = 'rgba(255,255,255,0.15)';
+      if (!isSelected) {
+        swatch.style.borderColor = 'var(--border-subtle, rgba(255,255,255,0.06))';
+        swatch.style.transform = 'scale(1)';
+      }
     });
     row.appendChild(swatch);
   }
@@ -193,112 +158,101 @@ function createColorPresets(
   return row;
 }
 
-// ------------------------------------------------------------
-// 主函数
-// ------------------------------------------------------------
+// ── 重置图标 SVG ──
+const RESET_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+
+// ── 主函数 ──
 
 /**
  * 创建调整控制面板
- * 包含照片位置、缩放、边框宽度、背景颜色、拍摄参数文字编辑和重置功能
- * @param container 挂载容器元素
- * @param state 当前应用状态
- * @param onChange 控件值变化回调，用于实时更新合成预览
  */
 export function createControlsPanel(
   container: HTMLElement,
   state: AppState,
   onChange: (updates: Partial<ControlUpdates>) => void,
 ): void {
-  // 清空容器
   container.innerHTML = '';
 
-  // 外层包裹容器
   const wrapper = document.createElement('div');
   wrapper.style.cssText = `
-    width: 100%;
-    max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    padding: 16px;
-    background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; gap: 16px;
+    padding: 18px;
+    background: var(--bg-glass, rgba(16,16,40,0.7));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg, 16px);
+    border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
     box-sizing: border-box;
+    box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.3));
   `;
 
   // 标题
   const title = document.createElement('h3');
   title.textContent = '调整参数';
-  title.style.cssText =
-    'color: #eee; font-size: 16px; margin: 0; font-weight: 600; text-align: center;';
+  title.style.cssText = `
+    color: var(--text-primary, #f0f0f5);
+    font-size: 15px; margin: 0; font-weight: 600;
+    text-align: center; letter-spacing: -0.01em;
+  `;
   wrapper.appendChild(title);
 
-  // ---- 1. 照片位置 X 偏移 ----
+  // 分隔线
+  const divider = () => {
+    const hr = document.createElement('div');
+    hr.style.cssText = `
+      height: 1px; width: 100%;
+      background: var(--border-subtle, rgba(255,255,255,0.06));
+      margin: 2px 0;
+    `;
+    return hr;
+  };
+
+  // ── 位置与缩放 ──
   const { element: offsetXEl, slider: offsetXSlider } = createSliderControl(
-    '水平偏移',
-    -200,
-    200,
-    1,
-    state.photoOffset.x,
-    'px',
+    '水平偏移', -200, 200, 1, state.photoOffset.x, 'px',
     (v) => onChange({ photoOffset: { x: v, y: parseFloat(offsetYSlider.value) } }),
   );
   wrapper.appendChild(offsetXEl);
 
-  // ---- 2. 照片位置 Y 偏移 ----
   const { element: offsetYEl, slider: offsetYSlider } = createSliderControl(
-    '垂直偏移',
-    -200,
-    200,
-    1,
-    state.photoOffset.y,
-    'px',
+    '垂直偏移', -200, 200, 1, state.photoOffset.y, 'px',
     (v) => onChange({ photoOffset: { x: parseFloat(offsetXSlider.value), y: v } }),
   );
   wrapper.appendChild(offsetYEl);
 
-  // ---- 3. 照片缩放（相对于默认值的倍数，1.0x = 默认大小）----
-  // 计算默认缩放基准值
-  const baseScale = state.photoScale; // 当前值即为默认计算值
-  const relativeScale = 1.0; // 默认显示 1.0x
+  const baseScale = state.photoScale;
   const { element: scaleEl } = createSliderControl(
-    '照片缩放',
-    0.5,
-    2.0,
-    0.1,
-    relativeScale,
-    'x',
+    '照片缩放', 0.5, 2.0, 0.1, 1.0, 'x',
     (v) => onChange({ photoScale: baseScale * v }),
   );
   wrapper.appendChild(scaleEl);
 
-  // ---- 4. 边框宽度 ----
   const { element: borderEl } = createSliderControl(
-    '边框宽度',
-    10,
-    100,
-    1,
-    state.frameConfig.borderWidth,
-    'px',
+    '边框宽度', 10, 100, 1, state.frameConfig.borderWidth, 'px',
     (v) => onChange({ borderWidth: v }),
   );
   wrapper.appendChild(borderEl);
 
-  // ---- 5. 背景颜色 ----
+  wrapper.appendChild(divider());
+
+  // ── 背景颜色 ──
   const { group: bgGroup } = createControlGroup('背景颜色');
   const colorRow = document.createElement('div');
-  colorRow.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+  colorRow.style.cssText = 'display: flex; align-items: center; gap: 10px;';
 
   const colorInput = document.createElement('input');
   colorInput.type = 'color';
   colorInput.value = state.backgroundColor;
   colorInput.style.cssText = COLOR_INPUT_STYLE;
 
-  // 颜色值文字显示
   const colorValue = document.createElement('span');
   colorValue.textContent = state.backgroundColor;
-  colorValue.style.cssText = 'color: #aaa; font-size: 12px; font-family: monospace;';
+  colorValue.style.cssText = `
+    color: var(--text-muted, #6b6b80); font-size: 12px;
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-variant-numeric: tabular-nums;
+  `;
 
   colorInput.addEventListener('input', () => {
     colorValue.textContent = colorInput.value;
@@ -308,21 +262,17 @@ export function createControlsPanel(
   colorRow.appendChild(colorInput);
   colorRow.appendChild(colorValue);
   bgGroup.appendChild(colorRow);
-
-  // 背景预设色块
-  const bgPresets = createColorPresets(BG_PRESETS, state.backgroundColor, (color) => {
+  bgGroup.appendChild(createColorPresets(BG_PRESETS, state.backgroundColor, (color) => {
     colorInput.value = color;
     colorValue.textContent = color;
     onChange({ backgroundColor: color });
-  });
-  bgGroup.appendChild(bgPresets);
-
+  }));
   wrapper.appendChild(bgGroup);
 
-  // ---- 5b. 相框颜色 ----
+  // ── 相框颜色 ──
   const { group: frameColorGroup } = createControlGroup('相框颜色');
   const frameColorRow = document.createElement('div');
-  frameColorRow.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+  frameColorRow.style.cssText = 'display: flex; align-items: center; gap: 10px;';
 
   const frameColorInput = document.createElement('input');
   frameColorInput.type = 'color';
@@ -331,7 +281,11 @@ export function createControlsPanel(
 
   const frameColorValue = document.createElement('span');
   frameColorValue.textContent = state.frameConfig.frameColor;
-  frameColorValue.style.cssText = 'color: #aaa; font-size: 12px; font-family: monospace;';
+  frameColorValue.style.cssText = `
+    color: var(--text-muted, #6b6b80); font-size: 12px;
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-variant-numeric: tabular-nums;
+  `;
 
   frameColorInput.addEventListener('input', () => {
     frameColorValue.textContent = frameColorInput.value;
@@ -341,18 +295,16 @@ export function createControlsPanel(
   frameColorRow.appendChild(frameColorInput);
   frameColorRow.appendChild(frameColorValue);
   frameColorGroup.appendChild(frameColorRow);
-
-  // 相框预设色块
-  const framePresets = createColorPresets(FRAME_PRESETS, state.frameConfig.frameColor, (color) => {
+  frameColorGroup.appendChild(createColorPresets(FRAME_PRESETS, state.frameConfig.frameColor, (color) => {
     frameColorInput.value = color;
     frameColorValue.textContent = color;
     onChange({ frameColor: color });
-  });
-  frameColorGroup.appendChild(framePresets);
-
+  }));
   wrapper.appendChild(frameColorGroup);
 
-  // ---- 6. 拍摄参数文字 ----
+  wrapper.appendChild(divider());
+
+  // ── 拍摄参数文字 ──
   const { group: metaGroup } = createControlGroup('拍摄参数文字');
   const metaInput = document.createElement('input');
   metaInput.type = 'text';
@@ -360,12 +312,13 @@ export function createControlsPanel(
   metaInput.value = state.customMetadataText ?? '';
   metaInput.style.cssText = TEXT_INPUT_STYLE;
 
-  // 聚焦时高亮边框
   metaInput.addEventListener('focus', () => {
-    metaInput.style.borderColor = '#7c6fff';
+    metaInput.style.borderColor = 'var(--border-focus, rgba(124,111,255,0.5))';
+    metaInput.style.boxShadow = '0 0 0 3px rgba(124,111,255,0.1)';
   });
   metaInput.addEventListener('blur', () => {
-    metaInput.style.borderColor = '#555';
+    metaInput.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
+    metaInput.style.boxShadow = 'none';
   });
   metaInput.addEventListener('input', () => {
     onChange({ metadataText: metaInput.value });
@@ -374,44 +327,41 @@ export function createControlsPanel(
   metaGroup.appendChild(metaInput);
   wrapper.appendChild(metaGroup);
 
-  // ---- 6b. 文字大小 ----
   const { element: fontSizeEl } = createSliderControl(
-    '文字大小',
-    12,
-    48,
-    1,
-    state.metadataFontSize,
-    'px',
+    '文字大小', 12, 48, 1, state.metadataFontSize, 'px',
     (v) => onChange({ metadataFontSize: v }),
   );
   wrapper.appendChild(fontSizeEl);
 
-  // ---- 7. 重置按钮 ----
+  wrapper.appendChild(divider());
+
+  // ── 重置按钮 ──
   const resetBtn = document.createElement('button');
-  resetBtn.textContent = '重置为默认值';
+  resetBtn.innerHTML = `${RESET_ICON}<span>重置为默认值</span>`;
   resetBtn.style.cssText = `
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: 1px solid #555;
+    padding: 9px 20px;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border-default, rgba(255,255,255,0.1));
     background-color: transparent;
-    color: #ccc;
-    font-size: 14px;
+    color: var(--text-secondary, #a0a0b8);
+    font-size: 13px; font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition: all var(--transition-fast, 150ms ease);
     align-self: center;
-    margin-top: 4px;
+    display: flex; align-items: center; gap: 6px;
+    font-family: inherit;
   `;
   resetBtn.addEventListener('mouseenter', () => {
-    resetBtn.style.borderColor = '#888';
-    resetBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+    resetBtn.style.borderColor = 'var(--error, #ff6b6b)';
+    resetBtn.style.color = 'var(--error, #ff6b6b)';
+    resetBtn.style.backgroundColor = 'rgba(255,107,107,0.06)';
   });
   resetBtn.addEventListener('mouseleave', () => {
-    resetBtn.style.borderColor = '#555';
+    resetBtn.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
+    resetBtn.style.color = 'var(--text-secondary, #a0a0b8)';
     resetBtn.style.backgroundColor = 'transparent';
   });
-  resetBtn.addEventListener('click', () => {
-    onChange({ reset: true });
-  });
+  resetBtn.addEventListener('click', () => onChange({ reset: true }));
   wrapper.appendChild(resetBtn);
 
   container.appendChild(wrapper);

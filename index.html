@@ -5,9 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>照片出框效果</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
       /* ============================================================
-         全局基础样式 - 暗色主题
+         设计令牌 (Design Tokens)
+         @author system
+         ============================================================ */
+      :root {
+        --bg-primary: #08081a;
+        --bg-secondary: #0e0e24;
+        --bg-surface: rgba(255, 255, 255, 0.035);
+        --bg-surface-hover: rgba(255, 255, 255, 0.065);
+        --bg-glass: rgba(16, 16, 40, 0.7);
+        --border-subtle: rgba(255, 255, 255, 0.06);
+        --border-default: rgba(255, 255, 255, 0.1);
+        --border-focus: rgba(124, 111, 255, 0.5);
+        --text-primary: #f0f0f5;
+        --text-secondary: #a0a0b8;
+        --text-muted: #6b6b80;
+        --accent: #7c6fff;
+        --accent-hover: #6b5ce7;
+        --accent-glow: rgba(124, 111, 255, 0.12);
+        --accent-glow-strong: rgba(124, 111, 255, 0.25);
+        --success: #22c55e;
+        --error: #ff6b6b;
+        --error-bg: rgba(255, 107, 107, 0.08);
+        --error-border: rgba(255, 107, 107, 0.2);
+        --warning: #ffb347;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+        --shadow-glow: 0 0 20px rgba(124, 111, 255, 0.15);
+        --transition-fast: 150ms ease;
+        --transition-normal: 200ms ease;
+        --transition-slow: 300ms ease;
+      }
+
+      /* ============================================================
+         全局基础样式
          ============================================================ */
       *,
       *::before,
@@ -18,36 +59,60 @@
       }
 
       body {
-        background-color: #0f0f23;
-        color: #eee;
-        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         min-height: 100vh;
         display: flex;
         justify-content: center;
-        padding: 32px 16px;
+        padding: 40px 20px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* 微妙的背景渐变 */
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+          radial-gradient(ellipse 60% 40% at 50% 0%, rgba(124, 111, 255, 0.06) 0%, transparent 70%),
+          radial-gradient(ellipse 40% 30% at 80% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
       }
 
       /* 居中布局容器 */
       #app {
+        position: relative;
+        z-index: 1;
         width: 100%;
-        max-width: 960px;
+        max-width: 1000px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 24px;
+        gap: 28px;
       }
 
       /* 应用标题 */
       .app-title {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 700;
-        color: #eee;
+        color: var(--text-primary);
         text-align: center;
-        letter-spacing: 1px;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
 
       /* ============================================================
-         阶段区域 - 默认隐藏，通过 .active 类显示
+         阶段区域
          ============================================================ */
       .stage-section {
         display: none;
@@ -67,8 +132,8 @@
         display: none;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
-        padding: 48px 24px;
+        gap: 20px;
+        padding: 56px 24px;
       }
 
       #loading-indicator.active {
@@ -76,12 +141,12 @@
       }
 
       .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(124, 111, 255, 0.2);
-        border-top-color: #7c6fff;
+        width: 36px;
+        height: 36px;
+        border: 2.5px solid rgba(124, 111, 255, 0.15);
+        border-top-color: var(--accent);
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        animation: spin 0.75s linear infinite;
       }
 
       @keyframes spin {
@@ -89,8 +154,9 @@
       }
 
       #loading-text {
-        color: #aaa;
-        font-size: 15px;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
       }
 
       /* ============================================================
@@ -100,14 +166,15 @@
         display: none;
         width: 100%;
         max-width: 560px;
-        color: #ff6b6b;
-        background-color: rgba(255, 107, 107, 0.1);
-        border: 1px solid rgba(255, 107, 107, 0.3);
-        border-radius: 8px;
-        padding: 12px 20px;
+        color: var(--error);
+        background-color: var(--error-bg);
+        border: 1px solid var(--error-border);
+        border-radius: var(--radius-md);
+        padding: 14px 20px;
         font-size: 14px;
         text-align: center;
         line-height: 1.6;
+        backdrop-filter: blur(8px);
       }
 
       #error-banner.active {
@@ -115,7 +182,7 @@
       }
 
       /* ============================================================
-         调整阶段布局 - 左侧画布预览 + 右侧控制面板
+         调整阶段布局
          ============================================================ */
       .adjust-layout {
         width: 100%;
@@ -129,19 +196,23 @@
       /* 左侧：画布预览区域 */
       #canvas-preview {
         flex: 1 1 480px;
-        max-width: 600px;
+        max-width: 620px;
         min-width: 280px;
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        border-radius: 8px;
+        border-radius: var(--radius-lg);
         overflow: hidden;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-md);
       }
 
       #canvas-preview canvas {
         max-width: 100%;
         height: auto;
-        border-radius: 8px;
+        border-radius: var(--radius-lg);
+        display: block;
       }
 
       /* 右侧：控制面板 + 导出面板 */
@@ -151,34 +222,61 @@
         flex-direction: column;
         gap: 16px;
       }
+
+      /* ============================================================
+         prefers-reduced-motion 支持
+         ============================================================ */
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation-duration: 1.5s;
+        }
+        * {
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* ============================================================
+         响应式适配
+         ============================================================ */
+      @media (max-width: 768px) {
+        body {
+          padding: 24px 12px;
+        }
+        .app-title {
+          font-size: 22px;
+        }
+        .adjust-layout {
+          gap: 16px;
+        }
+        .right-panel {
+          flex: 1 1 100%;
+          max-width: 100%;
+        }
+      }
+
+      @media (max-width: 375px) {
+        body {
+          padding: 16px 8px;
+        }
+        .app-title {
+          font-size: 20px;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="app">
-      <!-- 应用标题 -->
       <h1 class="app-title">照片出框效果</h1>
-
-      <!-- 错误提示横幅 -->
       <div id="error-banner"></div>
-
-      <!-- 加载指示器 -->
       <div id="loading-indicator">
         <div class="spinner"></div>
         <span id="loading-text">正在处理...</span>
       </div>
-
-      <!-- 阶段 1：上传 -->
       <div id="stage-upload" class="stage-section active"></div>
-
-      <!-- 阶段 2：分割预览 -->
       <div id="stage-segmentation-preview" class="stage-section"></div>
-
-      <!-- 阶段 3：调整（画布预览 + 控制面板 + 导出） -->
       <div id="stage-adjusting" class="stage-section">
         <div class="adjust-layout">
-          <!-- 左侧：合成效果画布预览 -->
           <div id="canvas-preview"></div>
-          <!-- 右侧：控制面板 + 导出面板 -->
           <div class="right-panel">
             <div id="controls-container"></div>
             <div id="export-container"></div>
@@ -186,7 +284,6 @@
         </div>
       </div>
     </div>
-
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

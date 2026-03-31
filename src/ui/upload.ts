@@ -1,9 +1,16 @@
 // ============================================================
 // 照片出框效果 - 文件上传组件
+// @author system
 // ============================================================
 
 import { validate } from '../core/image-validator';
 import type { ValidationError } from '../types';
+
+/** 相机 SVG 图标（Lucide 风格） */
+const CAMERA_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent, #7c6fff)"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`;
+
+/** 上传箭头 SVG 图标 */
+const UPLOAD_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted, #6b6b80)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`;
 
 /**
  * 根据验证错误类型返回中文错误提示
@@ -23,8 +30,6 @@ function getErrorMessage(error: ValidationError): string {
 
 /**
  * 将文件加载为 HTMLImageElement
- * @param file 图片文件
- * @returns 加载完成的 HTMLImageElement
  */
 function loadImageFromFile(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -44,9 +49,6 @@ function loadImageFromFile(file: File): Promise<HTMLImageElement> {
 
 /**
  * 处理用户选择的文件：验证、加载、预览、回调
- * @param file 用户选择的文件
- * @param elements UI 元素引用
- * @param onFileAccepted 文件验证通过后的回调
  */
 async function handleFile(
   file: File,
@@ -59,13 +61,11 @@ async function handleFile(
 ): Promise<void> {
   const { errorEl, previewEl, dropZone } = elements;
 
-  // 清除之前的错误和预览
   errorEl.textContent = '';
   errorEl.style.display = 'none';
   previewEl.innerHTML = '';
   previewEl.style.display = 'none';
 
-  // 验证文件
   const result = validate(file);
   if (!result.valid && result.error) {
     errorEl.textContent = getErrorMessage(result.error);
@@ -73,23 +73,24 @@ async function handleFile(
     return;
   }
 
-  // 加载图片并显示预览
   try {
     const image = await loadImageFromFile(file);
 
-    // 显示预览图片
     const previewImg = document.createElement('img');
     previewImg.src = URL.createObjectURL(file);
     previewImg.alt = '照片预览';
-    previewImg.style.cssText = 'max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: contain;';
+    previewImg.style.cssText = `
+      max-width: 100%; max-height: 300px;
+      border-radius: var(--radius-md, 12px);
+      object-fit: contain;
+      box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.3));
+    `;
     previewEl.innerHTML = '';
     previewEl.appendChild(previewImg);
     previewEl.style.display = 'block';
 
-    // 隐藏上传区域
     dropZone.style.display = 'none';
 
-    // 回调通知外部
     onFileAccepted(file, image);
   } catch {
     errorEl.textContent = '图片加载失败，请重试';
@@ -100,13 +101,12 @@ async function handleFile(
 /**
  * 创建文件上传界面，支持拖拽和点击上传
  * @param container 挂载容器元素
- * @param onFileAccepted 文件验证通过后的回调，接收文件和加载后的图片元素
+ * @param onFileAccepted 文件验证通过后的回调
  */
 export function createUploadUI(
   container: HTMLElement,
   onFileAccepted: (file: File, image: HTMLImageElement) => void,
 ): void {
-  // 创建上传区域容器
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;';
 
@@ -114,116 +114,160 @@ export function createUploadUI(
   const dropZone = document.createElement('div');
   dropZone.style.cssText = `
     width: 100%;
-    max-width: 480px;
-    min-height: 200px;
-    border: 2px dashed #555;
-    border-radius: 12px;
+    max-width: 520px;
+    min-height: 220px;
+    border: 1.5px dashed var(--border-default, rgba(255,255,255,0.1));
+    border-radius: var(--radius-xl, 20px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: border-color 0.2s, background-color 0.2s;
-    background-color: rgba(255, 255, 255, 0.03);
-    padding: 32px;
+    transition: border-color var(--transition-normal, 200ms ease),
+                background-color var(--transition-normal, 200ms ease),
+                box-shadow var(--transition-normal, 200ms ease);
+    background-color: var(--bg-surface, rgba(255,255,255,0.035));
+    padding: 40px 32px;
     box-sizing: border-box;
+    gap: 16px;
   `;
 
-  // 上传图标
-  const icon = document.createElement('div');
-  icon.textContent = '📷';
-  icon.style.cssText = 'font-size: 48px; margin-bottom: 12px;';
+  // 图标容器（带微妙背景）
+  const iconWrap = document.createElement('div');
+  iconWrap.style.cssText = `
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--accent-glow, rgba(124,111,255,0.12));
+    display: flex; align-items: center; justify-content: center;
+    transition: transform var(--transition-normal, 200ms ease),
+                background-color var(--transition-normal, 200ms ease);
+  `;
+  iconWrap.innerHTML = CAMERA_ICON;
 
-  // 提示文字
+  // 文字区域
+  const textWrap = document.createElement('div');
+  textWrap.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 8px;';
+
   const label = document.createElement('p');
-  label.textContent = '拖拽照片到此处，或点击选择文件';
-  label.style.cssText = 'color: #aaa; font-size: 15px; margin: 0 0 4px 0; text-align: center;';
+  label.style.cssText = `
+    color: var(--text-secondary, #a0a0b8);
+    font-size: 15px; font-weight: 500;
+    margin: 0; text-align: center;
+    display: flex; align-items: center; gap: 6px;
+  `;
+  label.innerHTML = `拖拽照片到此处，或点击选择`;
 
-  // 格式提示
   const hint = document.createElement('p');
   hint.textContent = '支持 JPEG、PNG、WebP 格式，最大 20MB';
-  hint.style.cssText = 'color: #666; font-size: 13px; margin: 0; text-align: center;';
+  hint.style.cssText = `
+    color: var(--text-muted, #6b6b80);
+    font-size: 13px; margin: 0; text-align: center;
+  `;
 
-  dropZone.appendChild(icon);
-  dropZone.appendChild(label);
-  dropZone.appendChild(hint);
+  // 上传按钮样式的提示
+  const uploadHint = document.createElement('div');
+  uploadHint.style.cssText = `
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 20px;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--accent-glow, rgba(124,111,255,0.12));
+    color: var(--accent, #7c6fff);
+    font-size: 13px; font-weight: 500;
+    transition: background-color var(--transition-fast, 150ms ease);
+  `;
+  uploadHint.innerHTML = `${UPLOAD_ICON}<span>选择文件</span>`;
+
+  textWrap.appendChild(label);
+  textWrap.appendChild(hint);
+
+  dropZone.appendChild(iconWrap);
+  dropZone.appendChild(textWrap);
+  dropZone.appendChild(uploadHint);
 
   // 隐藏的文件输入框
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = 'image/jpeg,image/png,image/webp';
   fileInput.style.display = 'none';
+  fileInput.setAttribute('aria-label', '选择图片文件');
 
   // 错误提示区域
   const errorEl = document.createElement('div');
+  errorEl.setAttribute('role', 'alert');
   errorEl.style.cssText = `
     display: none;
-    color: #ff6b6b;
-    background-color: rgba(255, 107, 107, 0.1);
-    border: 1px solid rgba(255, 107, 107, 0.3);
-    border-radius: 8px;
-    padding: 10px 16px;
+    color: var(--error, #ff6b6b);
+    background-color: var(--error-bg, rgba(255,107,107,0.08));
+    border: 1px solid var(--error-border, rgba(255,107,107,0.2));
+    border-radius: var(--radius-md, 12px);
+    padding: 12px 18px;
     font-size: 14px;
-    width: 100%;
-    max-width: 480px;
+    width: 100%; max-width: 520px;
     box-sizing: border-box;
     text-align: center;
+    backdrop-filter: blur(8px);
   `;
 
   // 预览区域
   const previewEl = document.createElement('div');
   previewEl.style.cssText = `
     display: none;
-    width: 100%;
-    max-width: 480px;
+    width: 100%; max-width: 520px;
     text-align: center;
     padding: 12px 0;
   `;
 
   const elements = { errorEl, previewEl, dropZone };
 
-  // 点击上传区域触发文件选择
-  dropZone.addEventListener('click', () => {
-    fileInput.click();
+  // 交互事件
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  // 悬停效果
+  dropZone.addEventListener('mouseenter', () => {
+    dropZone.style.borderColor = 'var(--accent, #7c6fff)';
+    dropZone.style.backgroundColor = 'var(--bg-surface-hover, rgba(255,255,255,0.065))';
+    dropZone.style.boxShadow = 'var(--shadow-glow, 0 0 20px rgba(124,111,255,0.15))';
+    iconWrap.style.transform = 'scale(1.05)';
+    iconWrap.style.backgroundColor = 'var(--accent-glow-strong, rgba(124,111,255,0.25))';
+  });
+  dropZone.addEventListener('mouseleave', () => {
+    dropZone.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
+    dropZone.style.backgroundColor = 'var(--bg-surface, rgba(255,255,255,0.035))';
+    dropZone.style.boxShadow = 'none';
+    iconWrap.style.transform = 'scale(1)';
+    iconWrap.style.backgroundColor = 'var(--accent-glow, rgba(124,111,255,0.12))';
   });
 
-  // 文件选择变化事件
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
-    if (file) {
-      handleFile(file, elements, onFileAccepted);
-    }
-    // 重置 input 以允许重复选择同一文件
+    if (file) handleFile(file, elements, onFileAccepted);
     fileInput.value = '';
   });
 
-  // 拖拽进入 - 高亮样式
+  // 拖拽事件
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
-    dropZone.style.borderColor = '#7c6fff';
-    dropZone.style.backgroundColor = 'rgba(124, 111, 255, 0.08)';
+    dropZone.style.borderColor = 'var(--accent, #7c6fff)';
+    dropZone.style.backgroundColor = 'var(--accent-glow, rgba(124,111,255,0.12))';
+    dropZone.style.boxShadow = 'var(--shadow-glow, 0 0 20px rgba(124,111,255,0.15))';
   });
 
-  // 拖拽离开 - 恢复样式
   dropZone.addEventListener('dragleave', (e) => {
     e.preventDefault();
-    dropZone.style.borderColor = '#555';
-    dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+    dropZone.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
+    dropZone.style.backgroundColor = 'var(--bg-surface, rgba(255,255,255,0.035))';
+    dropZone.style.boxShadow = 'none';
   });
 
-  // 拖拽放下 - 处理文件
   dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
-    dropZone.style.borderColor = '#555';
-    dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
-
+    dropZone.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
+    dropZone.style.backgroundColor = 'var(--bg-surface, rgba(255,255,255,0.035))';
+    dropZone.style.boxShadow = 'none';
     const file = e.dataTransfer?.files[0];
-    if (file) {
-      handleFile(file, elements, onFileAccepted);
-    }
+    if (file) handleFile(file, elements, onFileAccepted);
   });
 
-  // 组装 DOM
   wrapper.appendChild(dropZone);
   wrapper.appendChild(fileInput);
   wrapper.appendChild(errorEl);

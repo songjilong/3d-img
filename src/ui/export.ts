@@ -1,87 +1,52 @@
 // ============================================================
 // 照片出框效果 - 导出组件
-// 提供格式选择（PNG/JPEG）和导出按钮，触发浏览器下载
+// @author system
 // ============================================================
 
 import type { ExportFormat } from '../types';
 
-// ------------------------------------------------------------
-// 样式常量
-// ------------------------------------------------------------
+// ── SVG 图标 ──
 
-/** 单选按钮标签样式 */
-const RADIO_LABEL_STYLE = `
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #ccc;
-  font-size: 14px;
-  cursor: pointer;
+const DOWNLOAD_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+// ── 样式常量 ──
+
+const RADIO_LABEL_BASE = `
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; cursor: pointer;
   padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #555;
-  background-color: rgba(255, 255, 255, 0.04);
-  transition: border-color 0.2s, background-color 0.2s;
-  user-select: none;
+  border-radius: var(--radius-sm, 8px);
+  transition: all var(--transition-fast, 150ms ease);
+  user-select: none; font-weight: 500;
+  flex: 1; justify-content: center;
 `;
 
-/** 选中状态的单选按钮标签样式 */
-const RADIO_LABEL_SELECTED_STYLE = `
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #eee;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #7c6fff;
-  background-color: rgba(124, 111, 255, 0.1);
-  transition: border-color 0.2s, background-color 0.2s;
-  user-select: none;
+const RADIO_LABEL_STYLE = `${RADIO_LABEL_BASE}
+  border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+  background-color: transparent;
+  color: var(--text-secondary, #a0a0b8);
 `;
 
-/** 导出按钮样式 */
-const EXPORT_BTN_STYLE = `
-  padding: 12px 32px;
-  border-radius: 8px;
-  border: none;
-  background-color: #7c6fff;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  align-self: center;
+const RADIO_LABEL_SELECTED_STYLE = `${RADIO_LABEL_BASE}
+  border: 1.5px solid var(--accent, #7c6fff);
+  background-color: var(--accent-glow, rgba(124,111,255,0.12));
+  color: var(--text-primary, #f0f0f5);
 `;
 
-// ------------------------------------------------------------
-// 格式选项配置
-// ------------------------------------------------------------
+// ── 格式选项 ──
 
-/** 格式选项定义 */
 interface FormatOption {
   value: ExportFormat;
   label: string;
   description: string;
 }
 
-/** 可选的导出格式列表 */
 const FORMAT_OPTIONS: FormatOption[] = [
-  { value: 'png', label: 'PNG', description: 'PNG（保留透明度）' },
-  { value: 'jpeg', label: 'JPEG', description: 'JPEG（文件更小）' },
-  { value: 'webm', label: 'Video', description: '动态视频（MP4/WebM）' },
+  { value: 'png', label: 'PNG', description: 'PNG' },
+  { value: 'jpeg', label: 'JPEG', description: 'JPEG' },
+  { value: 'webm', label: 'Video', description: '动态视频' },
 ];
 
-// ------------------------------------------------------------
-// 辅助函数
-// ------------------------------------------------------------
-
-/**
- * 更新单选按钮组的选中样式
- * @param labels 所有单选按钮标签元素
- * @param selectedIndex 当前选中的索引
- */
 function updateRadioStyles(labels: HTMLLabelElement[], selectedIndex: number): void {
   labels.forEach((label, i) => {
     label.style.cssText =
@@ -89,57 +54,54 @@ function updateRadioStyles(labels: HTMLLabelElement[], selectedIndex: number): v
   });
 }
 
-// ------------------------------------------------------------
-// 主函数
-// ------------------------------------------------------------
-
 /**
- * 创建导出界面，提供格式选择和导出按钮
- * @param container 挂载容器元素
- * @param onExport 导出回调，接收用户选择的导出格式
+ * 创建导出界面
  */
 export function createExportUI(
   container: HTMLElement,
   onExport: (format: ExportFormat) => void,
 ): void {
-  // 当前选中的格式，默认 PNG
   let selectedFormat: ExportFormat = 'png';
 
-  // 外层包裹容器
   const wrapper = document.createElement('div');
   wrapper.style.cssText = `
-    width: 100%;
-    max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-    background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 18px;
+    background: var(--bg-glass, rgba(16,16,40,0.7));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg, 16px);
+    border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
     box-sizing: border-box;
+    box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.3));
   `;
 
   // 标题
   const title = document.createElement('h3');
   title.textContent = '导出设置';
-  title.style.cssText =
-    'color: #eee; font-size: 16px; margin: 0; font-weight: 600; text-align: center;';
+  title.style.cssText = `
+    color: var(--text-primary, #f0f0f5);
+    font-size: 15px; margin: 0; font-weight: 600;
+    text-align: center; letter-spacing: -0.01em;
+  `;
   wrapper.appendChild(title);
 
-  // 格式选择区域
+  // 格式选择
   const formatGroup = document.createElement('div');
-  formatGroup.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+  formatGroup.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
 
   const formatLabel = document.createElement('span');
   formatLabel.textContent = '导出格式';
-  formatLabel.style.cssText =
-    'color: #ccc; font-size: 13px; margin-bottom: 4px; user-select: none;';
+  formatLabel.style.cssText = `
+    color: var(--text-secondary, #a0a0b8);
+    font-size: 12px; font-weight: 500;
+    user-select: none; letter-spacing: 0.02em;
+  `;
   formatGroup.appendChild(formatLabel);
 
-  // 单选按钮容器
   const radioContainer = document.createElement('div');
-  radioContainer.style.cssText = 'display: flex; gap: 10px;';
+  radioContainer.style.cssText = 'display: flex; gap: 8px;';
 
   const labels: HTMLLabelElement[] = [];
 
@@ -152,8 +114,11 @@ export function createExportUI(
     radio.type = 'radio';
     radio.name = 'export-format';
     radio.value = option.value;
-    radio.checked = index === 0; // 默认选中 PNG
-    radio.style.cssText = 'accent-color: #7c6fff; cursor: pointer;';
+    radio.checked = index === 0;
+    radio.style.cssText = `
+      accent-color: var(--accent, #7c6fff); cursor: pointer;
+      width: 14px; height: 14px;
+    `;
 
     const text = document.createElement('span');
     text.textContent = option.description;
@@ -176,27 +141,38 @@ export function createExportUI(
 
   // 导出按钮
   const exportBtn = document.createElement('button');
-  exportBtn.textContent = '导出效果图';
-  exportBtn.style.cssText = EXPORT_BTN_STYLE;
+  exportBtn.innerHTML = `${DOWNLOAD_ICON}<span>导出效果图</span>`;
+  exportBtn.style.cssText = `
+    padding: 11px 28px;
+    border-radius: var(--radius-sm, 8px);
+    border: none;
+    background: linear-gradient(135deg, var(--accent, #7c6fff), var(--accent-hover, #6b5ce7));
+    color: #fff;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast, 150ms ease);
+    align-self: center;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 2px 10px rgba(124,111,255,0.3);
+    font-family: inherit;
+  `;
 
-  // 悬停效果
   exportBtn.addEventListener('mouseenter', () => {
-    exportBtn.style.backgroundColor = '#6b5ce7';
     exportBtn.style.transform = 'translateY(-1px)';
+    exportBtn.style.boxShadow = '0 4px 16px rgba(124,111,255,0.4)';
   });
   exportBtn.addEventListener('mouseleave', () => {
-    exportBtn.style.backgroundColor = '#7c6fff';
     exportBtn.style.transform = 'translateY(0)';
+    exportBtn.style.boxShadow = '0 2px 10px rgba(124,111,255,0.3)';
   });
-  // 按下效果
   exportBtn.addEventListener('mousedown', () => {
-    exportBtn.style.transform = 'translateY(0)';
+    exportBtn.style.transform = 'translateY(0) scale(0.98)';
+  });
+  exportBtn.addEventListener('mouseup', () => {
+    exportBtn.style.transform = 'translateY(-1px)';
   });
 
-  // 点击导出
-  exportBtn.addEventListener('click', () => {
-    onExport(selectedFormat);
-  });
+  exportBtn.addEventListener('click', () => onExport(selectedFormat));
 
   wrapper.appendChild(exportBtn);
   container.appendChild(wrapper);

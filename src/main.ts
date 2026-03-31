@@ -474,23 +474,40 @@ function getCurrentCompositeParams(): CompositeParams | null {
   };
 }
 
+/** 播放图标 SVG */
+const PLAY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+
+/** 停止图标 SVG */
+const STOP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
+
 /**
  * 创建 Live Photo 动画播放按钮
+ * @author system
  */
 function createAnimationButton(): void {
-  // 在导出面板下方添加动画按钮
   const animBtn = document.createElement('button');
-  animBtn.textContent = '▶ 播放 Live Photo';
+  animBtn.innerHTML = `${PLAY_ICON}<span>播放 Live Photo</span>`;
   animBtn.style.cssText = `
-    padding: 10px 24px; border-radius: 8px; border: 1px solid #7c6fff;
-    background-color: rgba(124,111,255,0.1); color: #ccc; font-size: 14px;
-    cursor: pointer; transition: background-color 0.2s; width: 100%; max-width: 320px;
+    padding: 10px 24px; border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+    background-color: var(--bg-surface, rgba(255,255,255,0.035));
+    color: var(--text-secondary, #a0a0b8);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast, 150ms ease);
+    width: 100%; max-width: 320px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
   `;
   animBtn.addEventListener('mouseenter', () => {
-    animBtn.style.backgroundColor = 'rgba(124,111,255,0.2)';
+    animBtn.style.borderColor = 'var(--accent, #7c6fff)';
+    animBtn.style.backgroundColor = 'var(--accent-glow, rgba(124,111,255,0.12))';
+    animBtn.style.color = 'var(--text-primary, #f0f0f5)';
   });
   animBtn.addEventListener('mouseleave', () => {
-    animBtn.style.backgroundColor = 'rgba(124,111,255,0.1)';
+    animBtn.style.borderColor = 'var(--border-default, rgba(255,255,255,0.1))';
+    animBtn.style.backgroundColor = 'var(--bg-surface, rgba(255,255,255,0.035))';
+    animBtn.style.color = 'var(--text-secondary, #a0a0b8)';
   });
 
   animBtn.addEventListener('click', () => {
@@ -498,7 +515,7 @@ function createAnimationButton(): void {
     if (currentAnimation && currentAnimation.isRunning()) {
       currentAnimation.stop();
       currentAnimation = null;
-      animBtn.textContent = '▶ 播放 Live Photo';
+      animBtn.innerHTML = `${PLAY_ICON}<span>播放 Live Photo</span>`;
       recompose();
       return;
     }
@@ -514,7 +531,7 @@ function createAnimationButton(): void {
 
     // 启动动画
     currentAnimation = startLivePhotoAnimation(animCanvas, params);
-    animBtn.textContent = '⏹ 停止动画';
+    animBtn.innerHTML = `${STOP_ICON}<span>停止动画</span>`;
   });
 
   exportContainer.appendChild(animBtn);
